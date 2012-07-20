@@ -40,6 +40,8 @@ To start a debug session:
 
 When gdb session is closed, ejtagproxy disconnects from the target board. You can use other tools, like pic32prog, to update the target software and then start a new gdb session.  No need to restart ejtagproxy between sessions.  You can safely run it as a daemon.
 
+Example of GDB session is presented [Demo_gdb_session here].
+
 = Install =
 To build on Linux or Mac OS X, run:
 {{{
