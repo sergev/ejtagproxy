@@ -11,6 +11,8 @@ Supported adapters:
 
 || [http://ejtagproxy.googlecode.com/svn/wiki/images/pickit2.png] || [http://ejtagproxy.googlecode.com/svn/wiki/images/pickit3.png] || [http://ejtagproxy.googlecode.com/svn/wiki/images/arm-usb-tiny.png] ||
 
+Please report all bugs on [http://code.google.com/p/ejtagproxy/issues/list issue tracker].
+
 = Download =
   * [http://ejtagproxy.googlecode.com/files/ejtagproxy-1.0.zip ejtagproxy-1.0.zip] (402 kb) - sources and Windows binary.
 
