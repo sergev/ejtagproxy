@@ -39,4 +39,4 @@ To build on Windows using MINGW compiler, run:
 = History =
 The utility is based on sources of:
  * [http://gdbproxy.sourceforge.net/ GDBproxy] project by Steve Underwood
- * [code.google.com/p/mcprog/ MCprog, MCremote], [http://code.google.com/p/milprog/ MILprog] and [http://code.google.com/p/pic32prog/ PIC32prog] projects by Serge Vakulenko
+ * [http://code.google.com/p/mcprog/ MCprog, MCremote], [http://code.google.com/p/milprog/ MILprog] and [http://code.google.com/p/pic32prog/ PIC32prog] projects by Serge Vakulenko
