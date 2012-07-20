@@ -1,6 +1,6 @@
 #summary About ejtagproxy project.
 
-=== Usage ===
+= Usage =
 {{{
     ejtagproxy [options]
 }}}
@@ -24,7 +24,7 @@ To start a debug session:
 
 When gdb session is closed, ejtagproxy disconnects from the target board. You can use other tools, like pic32prog, to update the target software and then start a new gdb session.  No need to restart ejtagproxy between sessions.  You can safely run it as a daemon.
 
-=== Install ===
+= Install =
 To build on Linux or Mac OS X, run:
 {{{
     make
@@ -36,7 +36,7 @@ To build on Windows using MINGW compiler, run:
     gmake -f make-mingw
 }}}
 
-=== History ===
+= History =
 The utility is based on sources of:
  * [http://gdbproxy.sourceforge.net/ GDBproxy] project by Steve Underwood
  * [code.google.com/p/mcprog/ MCprog, MCremote], [http://code.google.com/p/milprog/ MILprog] and [http://code.google.com/p/pic32prog/ PIC32prog] projects by Serge Vakulenko
