@@ -1,0 +1,94 @@
+#summary Example of gdb session.
+
+= Example of gdb session =
+
+Board: [http://www.microchip.com/stellent/idcplg?IdcService=SS_GET_PAGE&nodeId=1406&dDocName=en556208 Microstick II] with [http://vak-opensource.googlecode.com/svn/trunk/microcontrollers/ms2upgrade/pk3img020000-microstick2.hex PICkit3 scripting firmware].
+
+= ejtagproxy log =
+{{{
+$ ejtagproxy
+GDB proxy for Microchip PIC32 processors, Version 1.0.11
+Copyright (C) 2012 Serge Vakulenko
+
+EJTAGproxy comes with ABSOLUTELY NO WARRANTY; for details
+use `--warranty' option. This is Open Source software. You are
+welcome to redistribute it under certain conditions. Use the
+'--copying' option for details.
+
+ejtagproxy: waiting on TCP port 2000
+ejtagproxy: connected
+adapter: PICkit3 Version 2.0.0
+processor: MX150F128B
+processor: reset occured
+hardware: 6 breakpoints, 2 watchpoints
+oscillator: internal Fast RC, PLL div 1:2:2 mult x20
+}}}
+
+= gdb log =
+{{{
+mipsel-elf32-gdb flash.elf
+GNU gdb 6.8
+Copyright (C) 2008 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.  Type "show copying"
+and "show warranty" for details.
+This GDB was configured as "--host=i386-apple-darwin10.4.0 --target=mipsel-elf32"...
+0xbfc00000 in ?? ()
+(gdb) b main
+Breakpoint 1 at 0x9fc00068: file flash.c, line 65.
+(gdb) c
+Continuing.
+
+Breakpoint 1, main () at flash.c:65
+65          mtc0 (C0_COUNT, 0, 0);
+(gdb) n
+66          mtc0 (C0_COMPARE, 0, -1);
+(gdb) n
+67          mtc0 (C0_EBASE, 1, 0x9fc00000);     /* Vector base */
+(gdb) c
+Continuing.
+^C
+Program received signal SIGTRAP, Trace/breakpoint trap.
+udelay (usec=<value optimized out>) at flash.c:57
+57              if ((int) (now - final) >= 0)
+(gdb) bt
+#0  udelay (usec=<value optimized out>) at flash.c:57
+#1  0x9fc00118 in main () at flash.c:96
+(gdb) i reg
+          zero       at       v0       v1       a0       a1       a2       a3
+ R0   00000000 00000000 0f4033d1 0fac0ff9 00f42400 00000000 00000000 00000000 
+            t0       t1       t2       t3       t4       t5       t6       t7
+ R8   00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 
+            s0       s1       s2       s3       s4       s5       s6       s7
+ R16  bf88603c 00000001 bf88613c 00000100 0007a120 00000000 00000000 00000000 
+            t8       t9       k0       k1       gp       sp       s8       ra
+ R24  00000000 00000000 00000000 00000000 a0000000 a0000fd8 00000000 9fc00118 
+            sr       lo       hi      bad    cause       pc
+      00000000 b8d52c8f 72e9e56d bf5c729b b0800038 9fc00038 
+           fsr      fir
+      00000000 00000000 
+(gdb) b udelay
+Breakpoint 2 at 0x9fc00020: file flash.c, line 51.
+(gdb) c
+Continuing.
+
+Breakpoint 2, udelay (usec=500000) at flash.c:51
+51          unsigned final = now + usec * MHZ / 2;
+(gdb) n
+54              now = mfc0 (C0_COUNT, 0);
+(gdb) n
+57              if ((int) (now - final) >= 0)
+(gdb) n
+60      }
+(gdb) monitor reg
+               t0=        0   s0= bf88603c   t8=        0        lo= b8d52c8f
+at=        0   t1=        0   s1=        1   t9=        0        hi= 72e9e56d
+v0= 1113bade   t2=        0   s2= bf88613c   k0=        0    status=        0
+v1= 32fd594f   t3=        0   s3=      100   k1=        0     cause= b0800038
+a0=   f42400   t4=        0   s4=    7a120   gp= a0000000  badvaddr= bf5c729b
+a1=        0   t5=        0   s5=        0   sp= a0000fd8        pc= 9fc00044
+a2=        0   t6=        0   s6=        0   s8=        0
+a3=        0   t7=        0   s7=        0   ra= 9fc00118
+(gdb) _
+}}}
