@@ -26,7 +26,7 @@ oscillator: internal Fast RC, PLL div 1:2:2 mult x20
 
 = gdb log =
 {{{
-mipsel-elf32-gdb flash.elf
+$ mipsel-elf32-gdb flash.elf
 GNU gdb 6.8
 Copyright (C) 2008 Free Software Foundation, Inc.
 License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
