@@ -2,7 +2,7 @@
 
 = Example of gdb session =
 
-Board: [http://www.microchip.com/stellent/idcplg?IdcService=SS_GET_PAGE&nodeId=1406&dDocName=en556208 Microstick II] with [http://vak-opensource.googlecode.com/svn/trunk/microcontrollers/ms2upgrade/pk3img020000-microstick2.hex PICkit3 scripting firmware].
+Board: [http://www.microchip.com/stellent/idcplg?IdcService=SS_GET_PAGE&nodeId=1406&dDocName=en556208 Microstick II] with adapted PICkit3 scripting firmware (download [http://vak-opensource.googlecode.com/svn/trunk/microcontrollers/ms2upgrade/pk3img020000-microstick2.hex here]).
 
 = ejtagproxy log =
 {{{
