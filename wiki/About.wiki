@@ -1,5 +1,14 @@
 #summary About ejtagproxy project.
 
+EJTAGproxy is a utility for debugging [http://www.microchip.com/en_US/family/32bit/ PIC32 microcontrollers] with GNU debugger via JTAG or ICSP adapter.  
+
+|| [https://sites.google.com/site/matiascapeletto/gdb.logo.small.png] || [http://www.pddnet.com/uploadedImages/PDD/Design_Products/Electrical_And_Electronic/2010-10/microchip-pic-32.jpg] ||
+
+Supported adapters:
+ * [http://www.microchip.com/stellent/idcplg?IdcService=SS_GET_PAGE&nodeId=1406&dDocName=en023805 Microchip PICkit2]
+ * [http://www.microchip.com/stellent/idcplg?IdcService=SS_GET_PAGE&nodeId=1406&dDocName=en538340 Microchip PICkit3] with scripting firmware (use [http://ww1.microchip.com/downloads/en/DeviceDoc/PICkit3_scripting_v03.00beta.zip Scripting Tool] to upgrade)
+ * [http://www.olimex.com/dev/arm-usb-tiny.html Olimex ARM-USB-Tiny] JTAG adapter
+
 = Usage =
 {{{
     ejtagproxy [options]
