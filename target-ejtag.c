@@ -172,6 +172,10 @@ void mdelay (unsigned msec)
 }
 #endif
 
+/*
+ * Interrupted by user (^C).
+ * Close adapter connection and exit.
+ */
 static void target_sigint (int sig)
 {
     printf ("\ninterrupted by user.\n");
@@ -284,6 +288,9 @@ static void target_save_state (target_t *t)
     }
 }
 
+/*
+ * Print settings of PIC32 oscillator.
+ */
 static void print_oscillator (unsigned osccon,
     unsigned devcfg1, unsigned devcfg2)
 {
@@ -472,11 +479,17 @@ void target_close (target_t *t, int power_on)
     target_current = 0;
 }
 
+/*
+ * Get name of target CPU.
+ */
 const char *target_cpu_name (target_t *t)
 {
     return t->cpu_name;
 }
 
+/*
+ * Get device ID of target CPU.
+ */
 unsigned target_idcode (target_t *t)
 {
     return t->cpuid;
@@ -657,7 +670,7 @@ void target_step (target_t *t)
 }
 
 /*
- * Read data from memory.
+ * Read a word from memory.
  */
 unsigned target_read_word (target_t *t, unsigned addr)
 {
@@ -683,6 +696,9 @@ unsigned target_read_word (target_t *t, unsigned addr)
     return word;
 }
 
+/*
+ * Read a chunk of data from memory.
+ */
 void target_read_block (target_t *t, unsigned addr,
     unsigned nwords, unsigned *data)
 {
@@ -749,7 +765,7 @@ void target_read_block (target_t *t, unsigned addr,
 }
 
 /*
- * Write data to memory.
+ * Write a word to memory.
  */
 void target_write_word (target_t *t, unsigned addr, unsigned word)
 {
@@ -778,6 +794,9 @@ void target_write_word (target_t *t, unsigned addr, unsigned word)
         ARRAY_SIZE(param_in), param_in, 0, 0);
 }
 
+/*
+ * Write chunk of data to memory.
+ */
 void target_write_block (target_t *t, unsigned addr,
     unsigned nwords, unsigned *data)
 {
