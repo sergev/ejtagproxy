@@ -5,6 +5,7 @@ via JTAG or ICSP adapter.  Supported adapters:
  * Microchip PICkit2
  * Microchip PICkit3 with scripting firmware
  * Olimex ARM-USB-Tiny
+ * Olimex ARM-USB-Tiny-H
 
 Usage:
     ejtagproxy [options]

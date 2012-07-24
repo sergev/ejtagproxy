@@ -1,6 +1,8 @@
 /*
  * Interface to PIC32 JTAG port via FT2232-based USB adapter.
- * For example: Olimex ARM-USB-Tiny adapter.
+ * Supported hardware:
+ * 1) Olimex ARM-USB-Tiny adapter
+ * 2) Olimex ARM-USB-Tiny-H adapter
  *
  * Copyright (C) 2011-2012 Serge Vakulenko
  *
@@ -190,6 +192,10 @@ static void mpsse_flush_output (mpsse_adapter_t *a)
     a->bytes_to_read = 0;
 }
 
+/*
+ * Send a packet to FT2232 chip.
+ * Create a series of commands for JTAG interface.
+ */
 static void mpsse_send (mpsse_adapter_t *a,
     unsigned tms_prolog_nbits, unsigned tms_prolog,
     unsigned tdi_nbits, unsigned long long tdi, int read_flag)
@@ -300,6 +306,10 @@ static void mpsse_send (mpsse_adapter_t *a,
     }
 }
 
+/*
+ * Decode data, received from FT2232 chip.
+ * Return a word of received data, up to 64 bits.
+ */
 static unsigned long long mpsse_fix_data (mpsse_adapter_t *a, unsigned long long word)
 {
     unsigned long long fix_high_bit = word & a->fix_high_bit;
@@ -321,6 +331,10 @@ static unsigned long long mpsse_fix_data (mpsse_adapter_t *a, unsigned long long
     return word;
 }
 
+/*
+ * Receive data from FT2232 chip.
+ * Return a received word, up to 64 bits.
+ */
 static unsigned long long mpsse_recv (mpsse_adapter_t *a)
 {
     unsigned long long word;
@@ -334,6 +348,9 @@ static unsigned long long mpsse_recv (mpsse_adapter_t *a)
     return mpsse_fix_data (a, word);
 }
 
+/*
+ * Control /TRST, /SYSRST and LED hardware signals.
+ */
 static void mpsse_reset (mpsse_adapter_t *a, int trst, int sysrst, int led)
 {
     unsigned char output [3];
@@ -368,6 +385,9 @@ static void mpsse_reset (mpsse_adapter_t *a, int trst, int sysrst, int led)
             trst, sysrst, high_output, high_direction);
 }
 
+/*
+ * Set a JTAG speed for FT2232 chip.
+ */
 static void mpsse_speed (mpsse_adapter_t *a, int divisor)
 {
     unsigned char output [3];
@@ -379,6 +399,9 @@ static void mpsse_speed (mpsse_adapter_t *a, int divisor)
     bulk_write (a, output, 3);
 }
 
+/*
+ * Close a JTAG connection and deallocate the data.
+ */
 static void mpsse_close (adapter_t *adapter, int power_on)
 {
     mpsse_adapter_t *a = (mpsse_adapter_t*) adapter;
@@ -397,7 +420,7 @@ static void mpsse_close (adapter_t *adapter, int power_on)
 }
 
 /*
- * Read the Device Identification code
+ * Read the Device Identification code.
  */
 static unsigned mpsse_get_idcode (adapter_t *adapter)
 {
@@ -495,6 +518,10 @@ static void mpsse_stop_cpu (adapter_t *adapter)
     }
 }
 
+/*
+ * Perform a read CPU access in debug mode.
+ * Send the data out.
+ */
 static void pracc_exec_read (mpsse_adapter_t *a, unsigned address)
 {
     int offset;
@@ -542,6 +569,10 @@ static void pracc_exec_read (mpsse_adapter_t *a, unsigned address)
     mpsse_flush_output (a);
 }
 
+/*
+ * Perform a write CPU access in debug mode.
+ * Get data from CPU.
+ */
 static void pracc_exec_write (mpsse_adapter_t *a, unsigned address)
 {
     unsigned data;
@@ -583,6 +614,13 @@ static void pracc_exec_write (mpsse_adapter_t *a, unsigned address)
         fprintf (stderr, "exec: write address %08x := %08x\n", address, data);
 }
 
+/*
+ * Execute a codelet.
+ * The processor is in debug mode.  Every next instruction to execute is
+ * supplied via EJTAG block.  Input and output data are mapped to
+ * special regions in debug memory segment.  A separate stack region
+ * exists for temporary storage.
+ */
 static void mpsse_exec (adapter_t *adapter, int cycle,
     int code_len, const unsigned *code,
     int num_param_in, unsigned *param_in,
@@ -662,9 +700,13 @@ adapter_t *adapter_open_mpsse (void)
     for (bus = usb_get_busses(); bus; bus = bus->next) {
         for (dev = bus->devices; dev; dev = dev->next) {
             if (dev->descriptor.idVendor == OLIMEX_VID &&
-                (dev->descriptor.idProduct == OLIMEX_ARM_USB_TINY ||
-                 dev->descriptor.idProduct == OLIMEX_ARM_USB_TINY_H)) {
+                dev->descriptor.idProduct == OLIMEX_ARM_USB_TINY) {
                 name = "Olimex ARM-USB-Tiny";
+                goto found;
+            }
+            if (dev->descriptor.idVendor == OLIMEX_VID &&
+                dev->descriptor.idProduct == OLIMEX_ARM_USB_TINY_H) {
+                name = "Olimex ARM-USB-Tiny-H";
                 goto found;
             }
         }
@@ -715,6 +757,8 @@ failed:
      * Divide base oscillator 6 MHz by 12. */
     unsigned divisor = 12 - 1;
     unsigned char latency_timer = 2;
+    if (dev->descriptor.idProduct == OLIMEX_ARM_USB_TINY_H)
+        latency_timer = 0;
 
     if (usb_control_msg (a->usbdev,
         USB_TYPE_VENDOR | USB_RECIP_DEVICE | USB_ENDPOINT_OUT,

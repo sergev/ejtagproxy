@@ -6,6 +6,7 @@ Supported adapters:
  * [http://www.microchip.com/stellent/idcplg?IdcService=SS_GET_PAGE&nodeId=1406&dDocName=en023805 Microchip PICkit2]
  * [http://www.microchip.com/stellent/idcplg?IdcService=SS_GET_PAGE&nodeId=1406&dDocName=en538340 Microchip PICkit3] with scripting firmware (use [http://ww1.microchip.com/downloads/en/DeviceDoc/PICkit3_scripting_v03.00beta.zip Scripting Tool] to upgrade)
  * [http://www.olimex.com/dev/arm-usb-tiny.html Olimex ARM-USB-Tiny] JTAG adapter
+ * [http://www.olimex.com/dev/arm-usb-tiny-h.html Olimex ARM-USB-Tiny-H] JTAG adapter
 
 || [http://ejtagproxy.googlecode.com/svn/wiki/images/pickit2.png] || [http://ejtagproxy.googlecode.com/svn/wiki/images/pickit3.png] || [http://ejtagproxy.googlecode.com/svn/wiki/images/arm-usb-tiny.png] ||
 

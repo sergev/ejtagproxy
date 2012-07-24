@@ -78,7 +78,11 @@ typedef struct {
                           (unsigned char) ((w) >> 8), \
                           (unsigned char) ((w) >> 16), \
                           (unsigned char) ((w) >> 24)
-
+/*
+ * Send a 64-byte packet to USB HID device.
+ * Print trace info, if needed.
+ * Actual length of used data is given by `nbytes' argument.
+ */
 static void pickit_send_buf (pickit_adapter_t *a, unsigned char *buf, unsigned nbytes)
 {
     if (debug_level > 1) {
@@ -94,6 +98,11 @@ static void pickit_send_buf (pickit_adapter_t *a, unsigned char *buf, unsigned n
     hid_write (a->hiddev, buf, 64);
 }
 
+/*
+ * Send a data packet to PICkit device.
+ * Length of packet is given by `argc' argument.
+ * Fill empty space by end-of-buffer value.
+ */
 static void pickit_send (pickit_adapter_t *a, unsigned argc, ...)
 {
     va_list ap;
@@ -108,6 +117,11 @@ static void pickit_send (pickit_adapter_t *a, unsigned argc, ...)
     pickit_send_buf (a, buf, i);
 }
 
+/*
+ * Receive a data packet from USB HID device.
+ * Place the data into a->reply[] array.
+ * Print trace info, if needed.
+ */
 static void pickit_recv (pickit_adapter_t *a)
 {
     if (hid_read (a->hiddev, a->reply, 64) != 64) {
@@ -126,6 +140,10 @@ static void pickit_recv (pickit_adapter_t *a)
     }
 }
 
+/*
+ * Receive and check PICkit status.
+ * In case of timeout, stop the program with fatal message.
+ */
 static void check_timeout (pickit_adapter_t *a, const char *message)
 {
     unsigned status;
@@ -181,6 +199,10 @@ static void pickit_reset_cpu (adapter_t *adapter)
     }
 }
 
+/*
+ * Finish the application:.
+ * Clear debug mode and let the CPU run freely.
+ */
 static void pickit_finish (pickit_adapter_t *a, int power_on)
 {
     /* Exit programming mode. */
@@ -210,6 +232,9 @@ static void pickit_finish (pickit_adapter_t *a, int power_on)
     check_timeout (a, "finish");
 }
 
+/*
+ * Close a JTAG connection and deallocate the data.
+ */
 static void pickit_close (adapter_t *adapter, int power_on)
 {
     pickit_adapter_t *a = (pickit_adapter_t*) adapter;
@@ -220,7 +245,7 @@ static void pickit_close (adapter_t *adapter, int power_on)
 }
 
 /*
- * Read the Device Identification code
+ * Read the Device Identification code.
  */
 static unsigned pickit_get_idcode (adapter_t *adapter)
 {
@@ -308,6 +333,10 @@ static void pickit_stop_cpu (adapter_t *adapter)
     }
 }
 
+/*
+ * Perform a read CPU access in debug mode.
+ * Send the data out.
+ */
 static void pracc_exec_read (pickit_adapter_t *a, unsigned address)
 {
     int offset;
@@ -358,6 +387,10 @@ static void pracc_exec_read (pickit_adapter_t *a, unsigned address)
                 WORD_AS_BYTES (ctl));           /* write/read Control reg */
 }
 
+/*
+ * Perform a write CPU access in debug mode.
+ * Get data from CPU.
+ */
 static void pracc_exec_write (pickit_adapter_t *a, unsigned address)
 {
     unsigned data;
@@ -403,6 +436,13 @@ static void pracc_exec_write (pickit_adapter_t *a, unsigned address)
         fprintf (stderr, "exec: write address %08x := %08x\n", address, data);
 }
 
+/*
+ * Execute a codelet.
+ * The processor is in debug mode.  Every next instruction to execute is
+ * supplied via EJTAG block.  Input and output data are mapped to
+ * special regions in debug memory segment.  A separate stack region
+ * exists for temporary storage.
+ */
 static void pickit_exec (adapter_t *adapter, int cycle,
     int code_len, const unsigned *code,
     int num_param_in, unsigned *param_in,
@@ -483,8 +523,6 @@ static void pickit_exec (adapter_t *adapter, int cycle,
  * When adapter not found, return 0.
  * Unfortunately, on any connect (or disconnect) to ICSP port.
  * the processor needs to be reset.
- * While ICSP port is active, the processor runs slowly:
- * probably the main PLL is disabled.  No workaround still known.
  */
 adapter_t *adapter_open_pickit (void)
 {
