@@ -3,6 +3,7 @@
  * Supported hardware:
  * 1) Olimex ARM-USB-Tiny adapter
  * 2) Olimex ARM-USB-Tiny-H adapter
+ * 3) Bus Blaster v2 from Dangerous Prototypes
  *
  * Copyright (C) 2011-2012 Serge Vakulenko
  *
@@ -60,6 +61,11 @@ typedef struct {
     unsigned long long high_bit_mask;
     unsigned high_byte_bits;
 
+    /* Mapping of /TRST, /SYSRST and LED control signals. */
+    unsigned trst_control, trst_inverted;
+    unsigned sysrst_control, sysrst_inverted;
+    unsigned led_control, led_inverted;
+
     /* EJTAG Control register. */
     unsigned control;
 
@@ -80,6 +86,9 @@ typedef struct {
 #define OLIMEX_VID              0x15ba
 #define OLIMEX_ARM_USB_TINY     0x0004  /* ARM-USB-Tiny */
 #define OLIMEX_ARM_USB_TINY_H   0x002a	/* ARM-USB-Tiny-H */
+
+#define DP_BUSBLASTER_VID       0x0403
+#define DP_BUSBLASTER_PID       0x6010  /* Bus Blaster v2 */
 
 /*
  * USB endpoints.
@@ -130,7 +139,7 @@ static void bulk_write (mpsse_adapter_t *a, unsigned char *output, int nbytes)
     bytes_written = usb_bulk_write (a->usbdev, IN_EP, (char*) output,
         nbytes, 1000);
     if (bytes_written < 0) {
-        fprintf (stderr, "usb bulk write failed\n");
+        fprintf (stderr, "usb bulk write failed: %d\n", bytes_written);
         exit (-1);
     }
     if (bytes_written != nbytes)
@@ -365,14 +374,20 @@ static void mpsse_reset (mpsse_adapter_t *a, int trst, int sysrst, int led)
     output [2] = low_direction;
     bulk_write (a, output, 3);
 
-    if (! trst)
-        high_output |= 1;
+    if (trst)
+        high_output |= a->trst_control;
+    if (a->trst_inverted)
+        high_output ^= a->trst_control;
 
     if (sysrst)
-        high_output |= 2;
+        high_output |= a->sysrst_control;
+    if (a->sysrst_inverted)
+        high_output ^= a->sysrst_control;
 
     if (led)
-        high_output |= 8;
+        high_output |= a->led_control;
+    if (a->led_inverted)
+        high_output ^= a->led_control;
 
     /* command "set data bits high byte" */
     output [0] = 0x82;
@@ -692,8 +707,13 @@ adapter_t *adapter_open_mpsse (void)
     mpsse_adapter_t *a;
     struct usb_bus *bus;
     struct usb_device *dev;
-    char *name;
+    char driver_name [100];
 
+    a = calloc (1, sizeof (*a));
+    if (! a) {
+        fprintf (stderr, "adapter_open_mpsse: out of memory\n");
+        return 0;
+    }
     usb_init();
     usb_find_busses();
     usb_find_devices();
@@ -701,30 +721,51 @@ adapter_t *adapter_open_mpsse (void)
         for (dev = bus->devices; dev; dev = dev->next) {
             if (dev->descriptor.idVendor == OLIMEX_VID &&
                 dev->descriptor.idProduct == OLIMEX_ARM_USB_TINY) {
-                name = "Olimex ARM-USB-Tiny";
+                a->adapter.name = "Olimex ARM-USB-Tiny";
+                a->trst_control = 1;
+                a->trst_inverted = 1;
+                a->sysrst_control = 2;
+                a->led_control = 8;
                 goto found;
             }
             if (dev->descriptor.idVendor == OLIMEX_VID &&
                 dev->descriptor.idProduct == OLIMEX_ARM_USB_TINY_H) {
-                name = "Olimex ARM-USB-Tiny-H";
+                a->adapter.name = "Olimex ARM-USB-Tiny-H";
+                a->trst_control = 1;
+                a->trst_inverted = 1;
+                a->sysrst_control = 2;
+                a->led_control = 8;
+                goto found;
+            }
+            if (dev->descriptor.idVendor == DP_BUSBLASTER_VID &&
+                dev->descriptor.idProduct == DP_BUSBLASTER_PID) {
+                a->adapter.name = "Dangerous Prototypes Bus Blaster";
+                a->trst_control = 1;
+                a->trst_inverted = 1;
+                a->sysrst_control = 2;
+                a->sysrst_inverted = 1;
                 goto found;
             }
         }
     }
     //printf ("FT2232 adapter not found\n");
+    free (a);
     return 0;
 found:
-    a = calloc (1, sizeof (*a));
-    if (! a) {
-        fprintf (stderr, "%s: out of memory\n", name);
-        return 0;
-    }
-    a->adapter.name = name;
     a->usbdev = usb_open (dev);
     if (! a->usbdev) {
         fprintf (stderr, "%s: usb_open() failed\n", a->adapter.name);
         free (a);
         return 0;
+    }
+    if (usb_get_driver_np (a->usbdev, 0, driver_name, sizeof(driver_name)) == 0) {
+	if (usb_detach_kernel_driver_np (a->usbdev, 0) < 0) {
+	   printf("%s: failed to detach the %s kernel driver.\n",
+                a->adapter.name, driver_name);
+	   usb_close (a->usbdev);
+	   free (a);
+	   return 0;
+	}
     }
     usb_claim_interface (a->usbdev, 0);
     printf ("adapter: %s, id %04x:%04x\n", a->adapter.name,
@@ -754,18 +795,21 @@ failed:
     }
 
     /* Optimal rate is 0.5 MHz.
-     * Divide base oscillator 6 MHz by 12. */
+     * Divide base oscillator 6 MHz by 12.
+     * Calculated as TCK/SK = 12 MHz / (1 + divisor)*2. */
     unsigned divisor = 12 - 1;
     unsigned char latency_timer = 2;
     if (dev->descriptor.idProduct == OLIMEX_ARM_USB_TINY_H)
         latency_timer = 0;
 
+    /* Set latency timer. */
     if (usb_control_msg (a->usbdev,
         USB_TYPE_VENDOR | USB_RECIP_DEVICE | USB_ENDPOINT_OUT,
         SIO_SET_LATENCY_TIMER, latency_timer, 1, 0, 0, 1000) != 0) {
         fprintf (stderr, "%s: unable to set latency timer\n", a->adapter.name);
         goto failed;
     }
+    /* Get latency timer. */
     if (usb_control_msg (a->usbdev,
         USB_TYPE_VENDOR | USB_RECIP_DEVICE | USB_ENDPOINT_IN,
         SIO_GET_LATENCY_TIMER, 0, 1, (char*) &latency_timer, 1, 1000) != 1) {
@@ -806,6 +850,7 @@ failed:
         (MCHP_STATUS_CPS | MCHP_STATUS_CFGRDY | MCHP_STATUS_FAEN))
     {
         fprintf (stderr, "%s: invalid status = %04x\n", a->adapter.name, status);
+        mpsse_reset (a, 0, 0, 0);
         free (a);
         return 0;
     }
