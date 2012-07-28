@@ -48,7 +48,10 @@ struct _target_t {
     adapter_t   *adapter;
     const char  *cpu_name;
     unsigned    cpuid;
+    unsigned    impcode;
+    unsigned    prid;
     unsigned    is_running;
+    unsigned    is_pic32;
     unsigned    flash_kbytes;
     unsigned    boot_kbytes;
 
@@ -79,7 +82,7 @@ static const struct {
     const char *name;
     unsigned flash_kbytes;
     unsigned boot_kbytes;
-} devtab[] = {
+} microchip[] = {
     {0x4A07053, "MX110F016B",  16,  3}, /* PIC32MX1xx/2xx family */
     {0x4A09053, "MX110F016C",  16,  3},
     {0x4A0B053, "MX110F016D",  16,  3},
@@ -150,6 +153,74 @@ static const struct {
     {0x430E053, "MX795F512H", 512, 12},
     {0x4307053, "MX795F512L", 512, 12},
     {0}
+};
+
+static const struct {
+    unsigned devid;
+    const char *name;
+} devtab[] = {
+    { 0x000100, "R2000"                     },  /* Legacy processors */
+    { 0x000200, "R3000"                     },
+    { 0x000300, "R6000"                     },
+    { 0x000400, "R4000"                     },
+    { 0x000600, "R6000A"                    },
+    { 0x000900, "R10000"                    },
+    { 0x000b00, "R4300"                     },
+    { 0x000c00, "VR41xx"                    },
+    { 0x000e00, "R12000"                    },
+    { 0x000f00, "R14000"                    },
+    { 0x001000, "R8000"                     },
+    { 0x001200, "PR4450"                    },
+    { 0x002000, "R4600"                     },
+    { 0x002100, "R4700"                     },
+    { 0x002200, "TX39xx"                    },
+    { 0x002200, "R4640"                     },
+    { 0x002300, "R5000"                     },
+    { 0x002d00, "TX49xx"                    },
+    { 0x002400, "Sonic"                     },
+    { 0x002500, "Magic"                     },
+    { 0x002700, "RM7000"                    },
+    { 0x002800, "RM5260"                    },
+    { 0x003400, "RM9000"                    },
+    { 0x004200, "Loongson1"                 },
+    { 0x005400, "R5432"                     },
+    { 0x005500, "R5500"                     },
+    { 0x006300, "Loongson2"                 },
+    { 0x018000, "MIPS Technologies 4Kc"     },  /* MIPS Technologies */
+    { 0x018100, "MIPS Technologies 5Kc"     },
+    { 0x018200, "MIPS Technologies 20Kc"    },
+    { 0x018400, "MIPS Technologies 4KEc"    },
+    { 0x018600, "MIPS Technologies 4KSc"    },
+    { 0x018800, "MIPS Technologies 25Kf"    },
+    { 0x018900, "MIPS Technologies 5KE"     },
+    { 0x019000, "MIPS Technologies 4KEcR2"  },
+    { 0x019100, "MIPS Technologies 4KEmpR2" },
+    { 0x019200, "MIPS Technologies 4Ksd"    },
+    { 0x019300, "MIPS Technologies 24K"     },
+    { 0x019500, "MIPS Technologies 34K"     },
+    { 0x019600, "MIPS Technologies 24KE"    },
+    { 0x019700, "MIPS Technologies 74K"     },
+    { 0x019900, "MIPS Technologies 1004K"   },
+    { 0x019a00, "MIPS Technologies 1074K"   },
+    { 0x019c00, "MIPS Technologies M14Kc"   },
+    { 0x024000, "Broadcom BCM4710"          },  /* Broadcom */
+    { 0x029000, "Broadcom BCM6338"          },
+    { 0x028000, "Broadcom BCM6345"          },
+    { 0x029100, "Broadcom BCM6348"          },
+    { 0x02A000, "Broadcom BCM4350"          },
+    { 0x020000, "Broadcom BCM6358"          },
+    { 0x040100, "SiByte SB1"                },  /* SiByte */
+    { 0x041100, "SiByte SB1A"               },
+    { 0x050400, "SandCraft SR71000"         },  /* SandCraft */
+    { 0x0d0000, "Cavium CN38XX"             },  /* Cavium */
+    { 0x0d0100, "Cavium CN31XX"             },
+    { 0x0d0200, "Cavium CN30XX"             },
+    { 0x0d0300, "Cavium CN58XX"             },
+    { 0x0d0400, "Cavium CN56XX"             },
+    { 0x0d0600, "Cavium CN50XX"             },
+    { 0x0d0700, "Cavium CN52XX"             },
+    { 0xd00200, "Ingenic JZRISC"            },  /* Ingenic */
+    { 0 }
 };
 
 #if defined (__CYGWIN32__) || defined (MINGW32)
@@ -394,6 +465,7 @@ static unsigned set_osccon (target_t *t, unsigned osccon)
 target_t *target_open ()
 {
     target_t *t;
+    unsigned i;
 
     t = calloc (1, sizeof (target_t));
     if (! t) {
@@ -423,50 +495,79 @@ target_t *target_open ()
         t->adapter->close (t->adapter, 0);
         return 0;
     }
-    unsigned i;
-    for (i=0; (t->cpuid ^ devtab[i].devid) & 0x0fffffff; i++) {
-        if (devtab[i].devid == 0) {
-            /* Device not detected. */
-            fprintf (stderr, "Unknown CPUID=%08x.\n", t->cpuid);
-            t->adapter->close (t->adapter, 0);
-            return 0;
+    if ((t->cpuid & 0xfff) == 0x053) {
+        /* Microchip PIC32. */
+        t->is_pic32 = 1;
+        for (i=0; (t->cpuid ^ microchip[i].devid) & 0x0fffffff; i++) {
+            if (microchip[i].devid == 0) {
+                /* Device not detected. */
+                fprintf (stderr, "Unknown CPUID=%08x.\n", t->cpuid);
+                t->adapter->close (t->adapter, 0);
+                return 0;
+            }
         }
+        t->cpu_name = microchip[i].name;
+        t->flash_kbytes = microchip[i].flash_kbytes;
+        t->boot_kbytes = microchip[i].boot_kbytes;
+        printf ("processor: %s\n", t->cpu_name);
+    } else {
+        /* Read IMPCODE. */
+        t->impcode = t->adapter->get_impcode (t->adapter);
+        if (t->impcode & 1)
+            t->cpu_name = "MIPS64";
+        else
+            t->cpu_name = "MIPS32";
     }
-    t->cpu_name = devtab[i].name;
-    t->flash_kbytes = devtab[i].flash_kbytes;
-    t->boot_kbytes = devtab[i].boot_kbytes;
-    printf ("processor: %s\n", t->cpu_name);
 
     /* Stop the processor. */
     t->adapter->stop_cpu (t->adapter);
     target_save_state (t);
 
-    /* PIC32-specific: identify oscillator. */
-    unsigned osccon = target_read_word (t, REG_OSCCON);
-    unsigned devcfg1 = target_read_word (t, 0xbfc00000 + devtab[i].boot_kbytes * 1024 - 8);
-    unsigned devcfg2 = target_read_word (t, 0xbfc00000 + devtab[i].boot_kbytes * 1024 - 12);
-    if (debug_level > 0) {
-        printf ("OSCCON = %08x\n", osccon);
-        printf ("DEVCFG1 = %08x\n", devcfg1);
-        printf ("DEVCFG2 = %08x\n", devcfg2);
-    }
-
-    /* COSC: current oscillator selection. */
-    unsigned cosc = (osccon >> 12) & 7;
-
-    /* NOSC: new oscillator selection. */
-    unsigned fnosc = devcfg1 & 7;
-    if (cosc != fnosc) {
-        /* Switch oscillator. */
-        if (debug_level > 0) {
-            print_oscillator (osccon, devcfg1, devcfg2);
-            printf ("change oscillator from %u to %u\n", cosc, fnosc);
+    if (! t->is_pic32) {
+        /* Read COP0 PRId register. */
+        t->prid = target_read_cop0_register (t, 15, 0);
+        if (debug_level > 0)
+            printf ("PRID = %08x\n", t->prid);
+        for (i=0; (t->prid ^ devtab[i].devid) & 0x00ffff00; i++) {
+            if (devtab[i].devid == 0) {
+                /* Device not detected. */
+                fprintf (stderr, "Unknown PRID=%08x.\n", t->prid);
+                t->adapter->close (t->adapter, 0);
+                return 0;
+            }
         }
-        osccon &= ~(7 << 8);
-        osccon |= fnosc << 8;
-        osccon = set_osccon (t, osccon);
+        t->cpu_name = devtab[i].name;
+        printf ("processor: %s\n", t->cpu_name);
     }
-    print_oscillator (osccon, devcfg1, devcfg2);
+
+    if (t->is_pic32) {
+        /* PIC32-specific: identify oscillator. */
+        unsigned osccon = target_read_word (t, REG_OSCCON);
+        unsigned devcfg1 = target_read_word (t, 0xbfc00000 + t->boot_kbytes * 1024 - 8);
+        unsigned devcfg2 = target_read_word (t, 0xbfc00000 + t->boot_kbytes * 1024 - 12);
+        if (debug_level > 0) {
+            printf ("OSCCON = %08x\n", osccon);
+            printf ("DEVCFG1 = %08x\n", devcfg1);
+            printf ("DEVCFG2 = %08x\n", devcfg2);
+        }
+
+        /* COSC: current oscillator selection. */
+        unsigned cosc = (osccon >> 12) & 7;
+
+        /* NOSC: new oscillator selection. */
+        unsigned fnosc = devcfg1 & 7;
+        if (cosc != fnosc) {
+            /* Switch oscillator. */
+            if (debug_level > 0) {
+                print_oscillator (osccon, devcfg1, devcfg2);
+                printf ("change oscillator from %u to %u\n", cosc, fnosc);
+            }
+            osccon &= ~(7 << 8);
+            osccon |= fnosc << 8;
+            osccon = set_osccon (t, osccon);
+        }
+        print_oscillator (osccon, devcfg1, devcfg2);
+    }
     return t;
 }
 
@@ -501,7 +602,10 @@ unsigned target_idcode (target_t *t)
 int target_is_rom_address (target_t *t, unsigned addr)
 {
     /* For Microchip PIC32MX.
-     * TODO: put base addresses into devtab[]. */
+     * TODO: put base addresses into microchip[]. */
+    if (! t->is_pic32)
+        return 0;
+
     if (addr >= 0x9d000000 && addr < 0x9d000000 + t->flash_kbytes * 1024)
         return 1;
     if (addr >= 0xbd000000 && addr < 0xbd000000 + t->flash_kbytes * 1024)
@@ -904,6 +1008,31 @@ void target_write_register (target_t *t, unsigned regno, unsigned val)
     }
     t->adapter->exec (t->adapter, 1, ARRAY_SIZE(code), code, 0, 0, 0, 0);
     t->reg [regno] = val;
+}
+
+/*
+ * Read COP0 register.
+ */
+unsigned target_read_cop0_register (target_t *t, unsigned regno, unsigned sel)
+{
+    static unsigned code[] = {                  /* start: */
+        MIPS_MTC0 (15, 31, 0),                  /* move $15 to COP0 DeSave */
+        MIPS_LUI (15, UPPER16(PRACC_STACK)),	/* $15 = PRACC_STACK */
+        MIPS_ORI (15, 15, LOWER16(PRACC_STACK)),
+        MIPS_SW (8, 0, 15),			/* sw $8,($15) */
+
+        0,                                      /* mfc $8,regno,sel */
+        MIPS_SW (8, NEG16(PRACC_STACK - PRACC_PARAM_OUT), 15), /* store R8 @ param_out[0] */
+
+        MIPS_LW (8, 0, 15),			/* lw $8,($15) */
+        MIPS_B (NEG16(8)),			/* b start */
+        MIPS_MFC0 (15, 31, 0),                  /* move COP0 DeSave to $15 */
+    };
+    unsigned word;
+
+    code [4] = MIPS_MFC0 (8, regno, sel);
+    t->adapter->exec (t->adapter, 1, ARRAY_SIZE(code), code, 0, 0, 1, &word);
+    return word;
 }
 
 /*

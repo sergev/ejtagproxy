@@ -269,6 +269,30 @@ static unsigned pickit_get_idcode (adapter_t *adapter)
 }
 
 /*
+ * Read the Device Implementation register.
+ */
+static unsigned pickit_get_impcode (adapter_t *adapter)
+{
+    pickit_adapter_t *a = (pickit_adapter_t*) adapter;
+    unsigned impcode;
+
+    /* Read device id. */
+    pickit_send (a, 13, CMD_CLEAR_UPLOAD_BUFFER,
+        CMD_EXECUTE_SCRIPT, 9,
+            SCRIPT_JT2_SENDCMD, TAP_SW_ETAP,
+            SCRIPT_JT2_SENDCMD, ETAP_IMPCODE,
+            SCRIPT_JT2_XFERDATA32_LIT, 0, 0, 0, 0,
+        CMD_UPLOAD_DATA);
+    pickit_recv (a);
+    //fprintf (stderr, "pickit: read impcode, %d bytes: %02x %02x %02x %02x\n",
+    //  a->reply[0], a->reply[1], a->reply[2], a->reply[3], a->reply[4]);
+    if (a->reply[0] != 4)
+        return 0;
+    impcode = a->reply[1] | a->reply[2] << 8 | a->reply[3] << 16 | a->reply[4] << 24;
+    return impcode;
+}
+
+/*
  * Is the processor stopped?
  */
 static int pickit_cpu_stopped (adapter_t *adapter)
@@ -697,6 +721,7 @@ adapter_t *adapter_open_pickit (void)
     /* User functions. */
     a->adapter.close = pickit_close;
     a->adapter.get_idcode = pickit_get_idcode;
+    a->adapter.get_impcode = pickit_get_impcode;
     a->adapter.cpu_stopped = pickit_cpu_stopped;
     a->adapter.stop_cpu = pickit_stop_cpu;
     a->adapter.reset_cpu = pickit_reset_cpu;
