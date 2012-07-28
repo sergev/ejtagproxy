@@ -50,6 +50,7 @@ void target_restart (target_t *t);
 int target_is_stopped (target_t *t, int *is_aborted);
 
 unsigned target_read_register (target_t *t, unsigned regno);
+unsigned target_read_cop0_register (target_t *t, unsigned regno, unsigned sel);
 void target_write_register (target_t *t, unsigned regno, unsigned val);
 
 void target_add_break (target_t *t, unsigned addr, int type);

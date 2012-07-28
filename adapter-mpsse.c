@@ -66,6 +66,9 @@ typedef struct {
     unsigned sysrst_control, sysrst_inverted;
     unsigned led_control, led_inverted;
 
+    /* Manufacturer-specific information. */
+    int is_microchip;
+
     /* EJTAG Control register. */
     unsigned control;
 
@@ -421,9 +424,13 @@ static void mpsse_close (adapter_t *adapter, int power_on)
 {
     mpsse_adapter_t *a = (mpsse_adapter_t*) adapter;
 
-    /* Clear EJTAGBOOT mode. */
-    mpsse_send (a, 1, 1, 5, TAP_SW_ETAP, 0);
-    mpsse_send (a, 6, 31, 0, 0, 0);             /* TMS 1-1-1-1-1-0 */
+    if (a->is_microchip) {
+        /* Clear EJTAGBOOT mode. */
+        mpsse_send (a, 1, 1, 5, TAP_SW_ETAP, 0);
+        mpsse_send (a, 6, 31, 0, 0, 0);             /* TMS 1-1-1-1-1-0 */
+    } else {
+        // TODO
+    }
     mpsse_flush_output (a);
 
     /* LED off. */
@@ -454,6 +461,26 @@ static unsigned mpsse_get_idcode (adapter_t *adapter)
 }
 
 /*
+ * Read the Device Implementation register.
+ */
+static unsigned mpsse_get_impcode (adapter_t *adapter)
+{
+    mpsse_adapter_t *a = (mpsse_adapter_t*) adapter;
+    unsigned impcode;
+
+    mpsse_send (a, 6, 31, 0, 0, 0);                 /* TMS 1-1-1-1-1-0 */
+    if (a->is_microchip)
+        mpsse_send (a, 1, 1, 5, TAP_SW_ETAP, 0);
+    mpsse_send (a, 1, 1, 5, ETAP_IMPCODE, 0);
+    mpsse_send (a, 0, 0, 32, 0, 1);
+    impcode = mpsse_recv (a);
+
+    if (debug_level > 0)
+        fprintf (stderr, "%s: impcode %08x\n", a->adapter.name, impcode);
+    return impcode;
+}
+
+/*
  * Hardware reset.
  */
 static void mpsse_reset_cpu (adapter_t *adapter)
@@ -465,15 +492,20 @@ static void mpsse_reset_cpu (adapter_t *adapter)
      * Clear a 'reset occured' flag. */
     ctl = (a->control & ~CONTROL_ROCC) | CONTROL_EJTAGBRK;
 
-    mpsse_send (a, 6, 31, 0, 0, 0);                 /* TMS 1-1-1-1-1-0 */
-    mpsse_send (a, 1, 1, 5, TAP_SW_ETAP, 0);
-    mpsse_send (a, 1, 1, 5, ETAP_EJTAGBOOT, 0);     /* stop on boot vector */
-    mpsse_send (a, 1, 1, 5, TAP_SW_MTAP, 0);
-    mpsse_send (a, 1, 1, 5, MTAP_COMMAND, 0);
-    mpsse_send (a, 0, 0, 8, MCHP_ASSERT_RST, 0);    /* toggle Reset */
-    mpsse_send (a, 0, 0, 8, MCHP_DEASSERT_RST, 0);
-    mpsse_send (a, 0, 0, 8, MCHP_FLASH_ENABLE, 0);
-    mpsse_send (a, 1, 1, 5, TAP_SW_ETAP, 0);
+    if (a->is_microchip) {
+        mpsse_send (a, 6, 31, 0, 0, 0);                 /* TMS 1-1-1-1-1-0 */
+        mpsse_send (a, 1, 1, 5, TAP_SW_ETAP, 0);
+        mpsse_send (a, 1, 1, 5, ETAP_EJTAGBOOT, 0);     /* stop on boot vector */
+        mpsse_send (a, 1, 1, 5, TAP_SW_MTAP, 0);
+        mpsse_send (a, 1, 1, 5, MTAP_COMMAND, 0);
+        mpsse_send (a, 0, 0, 8, MCHP_ASSERT_RST, 0);    /* toggle Reset */
+        mpsse_send (a, 0, 0, 8, MCHP_DEASSERT_RST, 0);
+        mpsse_send (a, 0, 0, 8, MCHP_FLASH_ENABLE, 0);
+        mpsse_send (a, 1, 1, 5, TAP_SW_ETAP, 0);
+    } else {
+        // TODO: generic MIPS processor.
+        fprintf (stderr, "mpsse_reset_cpu: not implemented yet\n");
+    }
 
     /* Set EjtagBrk bit - request a Debug exception.
      * Clear a 'reset occured' flag. */
@@ -836,36 +868,45 @@ failed:
     unsigned char enable_loopback[] = "\x85";
     bulk_write (a, enable_loopback, 1);
 
-    /* Reset the JTAG TAP controller. */
-    mpsse_send (a, 6, 31, 0, 0, 0);             /* TMS 1-1-1-1-1-0 */
+    /* Reset the JTAG TAP controller: TMS 1-1-1-1-1-0.
+     * After reset, the IDCODE register is always selected.
+     * Read out 32 bits of data. */
+    unsigned idcode;
+    mpsse_send (a, 6, 31, 32, 0, 1);
+    idcode = mpsse_recv (a);
+    if ((idcode & 0xfff) == 0x053)
+        a->is_microchip = 1;
 
-    /* Check status. */
-    mpsse_send (a, 1, 1, 5, TAP_SW_MTAP, 0);
-    mpsse_send (a, 1, 1, 5, MTAP_COMMAND, 0);
-    mpsse_send (a, 0, 0, 8, MCHP_STATUS, 1);
-    unsigned status = mpsse_recv (a);
-    if (debug_level > 0)
-        fprintf (stderr, "%s: status %04x\n", a->adapter.name, status);
-    if (status & MCHP_STATUS_DEVRST)
-        fprintf (stderr, "%s: processor is in reset mode\n", a->adapter.name);
-    if ((status & ~MCHP_STATUS_DEVRST) !=
-        (MCHP_STATUS_CPS | MCHP_STATUS_CFGRDY | MCHP_STATUS_FAEN))
-    {
-        fprintf (stderr, "%s: invalid status = %04x\n", a->adapter.name, status);
-        mpsse_reset (a, 0, 0, 0);
-        free (a);
-        return 0;
+    /* Check Microchip status. */
+    if (a->is_microchip) {
+        mpsse_send (a, 1, 1, 5, TAP_SW_MTAP, 0);
+        mpsse_send (a, 1, 1, 5, MTAP_COMMAND, 0);
+        mpsse_send (a, 0, 0, 8, MCHP_STATUS, 1);
+        unsigned status = mpsse_recv (a);
+        if (debug_level > 0)
+            fprintf (stderr, "%s: status %04x\n", a->adapter.name, status);
+        if (status & MCHP_STATUS_DEVRST)
+            fprintf (stderr, "%s: processor is in reset mode\n", a->adapter.name);
+        if ((status & ~MCHP_STATUS_DEVRST) !=
+            (MCHP_STATUS_CPS | MCHP_STATUS_CFGRDY | MCHP_STATUS_FAEN))
+        {
+            fprintf (stderr, "%s: invalid status = %04x\n", a->adapter.name, status);
+            mpsse_reset (a, 0, 0, 0);
+            free (a);
+            return 0;
+        }
+
+        /* Leave it in ETAP mode. */
+        mpsse_send (a, 1, 1, 5, TAP_SW_ETAP, 0);
+        mpsse_flush_output (a);
     }
-
-    /* Leave it in ETAP mode. */
-    mpsse_send (a, 1, 1, 5, TAP_SW_ETAP, 0);
-    mpsse_flush_output (a);
     a->control = CONTROL_ROCC | CONTROL_PRACC |
                  CONTROL_PROBEN | CONTROL_PROBTRAP;
 
     /* User functions. */
     a->adapter.close = mpsse_close;
     a->adapter.get_idcode = mpsse_get_idcode;
+    a->adapter.get_impcode = mpsse_get_impcode;
     a->adapter.cpu_stopped = mpsse_cpu_stopped;
     a->adapter.stop_cpu = mpsse_stop_cpu;
     a->adapter.reset_cpu = mpsse_reset_cpu;

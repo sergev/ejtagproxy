@@ -34,6 +34,7 @@ struct _adapter_t {
 
     void (*close) (adapter_t *a, int power_on);
     unsigned (*get_idcode) (adapter_t *a);
+    unsigned (*get_impcode) (adapter_t *a);
     int (*cpu_stopped) (adapter_t *a);
     void (*reset_cpu) (adapter_t *a);
     void (*stop_cpu) (adapter_t *a);
