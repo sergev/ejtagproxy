@@ -83,75 +83,80 @@ static const struct {
     unsigned flash_kbytes;
     unsigned boot_kbytes;
 } microchip[] = {
-    {0x4A07053, "MX110F016B",  16,  3}, /* PIC32MX1xx/2xx family */
-    {0x4A09053, "MX110F016C",  16,  3},
-    {0x4A0B053, "MX110F016D",  16,  3},
-    {0x4A06053, "MX120F032B",  32,  3},
-    {0x4A08053, "MX120F032C",  32,  3},
-    {0x4A0A053, "MX120F032D",  32,  3},
-    {0x4D07053, "MX130F064B",  64,  3},
-    {0x4D09053, "MX130F064C",  64,  3},
-    {0x4D0B053, "MX130F064D",  64,  3},
-    {0x4D06053, "MX150F128B", 128,  3},
-    {0x4D08053, "MX150F128C", 128,  3},
-    {0x4D0A053, "MX150F128D", 128,  3},
-    {0x4A01053, "MX210F016B",  16,  3},
-    {0x4A03053, "MX210F016C",  16,  3},
-    {0x4A05053, "MX210F016D",  16,  3},
-    {0x4A00053, "MX220F032B",  32,  3},
-    {0x4A02053, "MX220F032C",  32,  3},
-    {0x4A04053, "MX220F032D",  32,  3},
-    {0x4D01053, "MX230F064B",  64,  3},
-    {0x4D03053, "MX230F064C",  64,  3},
-    {0x4D05053, "MX230F064D",  64,  3},
-    {0x4D00053, "MX250F128B", 128,  3},
-    {0x4D02053, "MX250F128C", 128,  3},
-    {0x4D04053, "MX250F128D", 128,  3},
-    {0x0902053, "MX320F032H",  32, 12}, /* PIC32MX3xx/4xx family */
-    {0x0906053, "MX320F064H",  64, 12},
-    {0x090A053, "MX320F128H", 128, 12},
-    {0x092A053, "MX320F128L", 128, 12},
-    {0x090D053, "MX340F128H", 128, 12},
-    {0x092D053, "MX340F128L", 128, 12},
-    {0x0912053, "MX340F256H", 256, 12},
-    {0x0916053, "MX340F512H", 512, 12},
-    {0x0934053, "MX360F256L", 256, 12},
-    {0x0938053, "MX360F512L", 512, 12},
-    {0x0942053, "MX420F032H",  32, 12},
-    {0x094D053, "MX440F128H", 128, 12},
-    {0x096D053, "MX440F128L", 128, 12},
-    {0x0952053, "MX440F256H", 256, 12},
-    {0x0956053, "MX440F512H", 512, 12},
-    {0x0974053, "MX460F256L", 256, 12},
-    {0x0978053, "MX460F512L", 512, 12},
-    {0x4400053, "MX534F064H",  64, 12}, /* PIC32MX5xx/6xx/7xx family */
-    {0x440C053, "MX534F064L",  64, 12},
-    {0x4401053, "MX564F064H",  64, 12},
-    {0x440D053, "MX564F064L",  64, 12},
-    {0x4403053, "MX564F128H", 128, 12},
-    {0x440F053, "MX564F128L", 128, 12},
-    {0x4317053, "MX575F256H", 256, 12},
-    {0x4333053, "MX575F256L", 256, 12},
-    {0x4309053, "MX575F512H", 512, 12},
-    {0x430F053, "MX575F512L", 512, 12},
-    {0x4405053, "MX664F064H",  64, 12},
-    {0x4411053, "MX664F064L",  64, 12},
-    {0x4407053, "MX664F128H", 128, 12},
-    {0x4413053, "MX664F128L", 128, 12},
-    {0x430B053, "MX675F256H", 256, 12},
-    {0x4305053, "MX675F256L", 256, 12},
-    {0x430C053, "MX675F512H", 512, 12},
-    {0x4311053, "MX675F512L", 512, 12},
-    {0x4325053, "MX695F512H", 512, 12},
-    {0x4341053, "MX695F512L", 512, 12},
-    {0x440B053, "MX764F128H", 128, 12},
-    {0x4417053, "MX764F128L", 128, 12},
-    {0x4303053, "MX775F256H", 256, 12},
-    {0x4312053, "MX775F256L", 256, 12},
-    {0x430D053, "MX775F512H", 512, 12},
-    {0x4306053, "MX775F512L", 512, 12},
-    {0x430E053, "MX795F512H", 512, 12},
-    {0x4307053, "MX795F512L", 512, 12},
+    /* PIC32 MX1xx/2xx family */
+    {0x4A07053, "Microchip PIC32MX110F016B",  16,  3},
+    {0x4A09053, "Microchip PIC32MX110F016C",  16,  3},
+    {0x4A0B053, "Microchip PIC32MX110F016D",  16,  3},
+    {0x4A06053, "Microchip PIC32MX120F032B",  32,  3},
+    {0x4A08053, "Microchip PIC32MX120F032C",  32,  3},
+    {0x4A0A053, "Microchip PIC32MX120F032D",  32,  3},
+    {0x4D07053, "Microchip PIC32MX130F064B",  64,  3},
+    {0x4D09053, "Microchip PIC32MX130F064C",  64,  3},
+    {0x4D0B053, "Microchip PIC32MX130F064D",  64,  3},
+    {0x4D06053, "Microchip PIC32MX150F128B", 128,  3},
+    {0x4D08053, "Microchip PIC32MX150F128C", 128,  3},
+    {0x4D0A053, "Microchip PIC32MX150F128D", 128,  3},
+    {0x4A01053, "Microchip PIC32MX210F016B",  16,  3},
+    {0x4A03053, "Microchip PIC32MX210F016C",  16,  3},
+    {0x4A05053, "Microchip PIC32MX210F016D",  16,  3},
+    {0x4A00053, "Microchip PIC32MX220F032B",  32,  3},
+    {0x4A02053, "Microchip PIC32MX220F032C",  32,  3},
+    {0x4A04053, "Microchip PIC32MX220F032D",  32,  3},
+    {0x4D01053, "Microchip PIC32MX230F064B",  64,  3},
+    {0x4D03053, "Microchip PIC32MX230F064C",  64,  3},
+    {0x4D05053, "Microchip PIC32MX230F064D",  64,  3},
+    {0x4D00053, "Microchip PIC32MX250F128B", 128,  3},
+    {0x4D02053, "Microchip PIC32MX250F128C", 128,  3},
+    {0x4D04053, "Microchip PIC32MX250F128D", 128,  3},
+
+    /* PIC32 MX3xx/4xx family */
+    {0x0902053, "Microchip PIC32MX320F032H",  32, 12},
+    {0x0906053, "Microchip PIC32MX320F064H",  64, 12},
+    {0x090A053, "Microchip PIC32MX320F128H", 128, 12},
+    {0x092A053, "Microchip PIC32MX320F128L", 128, 12},
+    {0x090D053, "Microchip PIC32MX340F128H", 128, 12},
+    {0x092D053, "Microchip PIC32MX340F128L", 128, 12},
+    {0x0912053, "Microchip PIC32MX340F256H", 256, 12},
+    {0x0916053, "Microchip PIC32MX340F512H", 512, 12},
+    {0x0934053, "Microchip PIC32MX360F256L", 256, 12},
+    {0x0938053, "Microchip PIC32MX360F512L", 512, 12},
+    {0x0942053, "Microchip PIC32MX420F032H",  32, 12},
+    {0x094D053, "Microchip PIC32MX440F128H", 128, 12},
+    {0x096D053, "Microchip PIC32MX440F128L", 128, 12},
+    {0x0952053, "Microchip PIC32MX440F256H", 256, 12},
+    {0x0956053, "Microchip PIC32MX440F512H", 512, 12},
+    {0x0974053, "Microchip PIC32MX460F256L", 256, 12},
+    {0x0978053, "Microchip PIC32MX460F512L", 512, 12},
+
+    /* PIC32 MX5xx/6xx/7xx family */
+    {0x4400053, "Microchip PIC32MX534F064H",  64, 12},
+    {0x440C053, "Microchip PIC32MX534F064L",  64, 12},
+    {0x4401053, "Microchip PIC32MX564F064H",  64, 12},
+    {0x440D053, "Microchip PIC32MX564F064L",  64, 12},
+    {0x4403053, "Microchip PIC32MX564F128H", 128, 12},
+    {0x440F053, "Microchip PIC32MX564F128L", 128, 12},
+    {0x4317053, "Microchip PIC32MX575F256H", 256, 12},
+    {0x4333053, "Microchip PIC32MX575F256L", 256, 12},
+    {0x4309053, "Microchip PIC32MX575F512H", 512, 12},
+    {0x430F053, "Microchip PIC32MX575F512L", 512, 12},
+    {0x4405053, "Microchip PIC32MX664F064H",  64, 12},
+    {0x4411053, "Microchip PIC32MX664F064L",  64, 12},
+    {0x4407053, "Microchip PIC32MX664F128H", 128, 12},
+    {0x4413053, "Microchip PIC32MX664F128L", 128, 12},
+    {0x430B053, "Microchip PIC32MX675F256H", 256, 12},
+    {0x4305053, "Microchip PIC32MX675F256L", 256, 12},
+    {0x430C053, "Microchip PIC32MX675F512H", 512, 12},
+    {0x4311053, "Microchip PIC32MX675F512L", 512, 12},
+    {0x4325053, "Microchip PIC32MX695F512H", 512, 12},
+    {0x4341053, "Microchip PIC32MX695F512L", 512, 12},
+    {0x440B053, "Microchip PIC32MX764F128H", 128, 12},
+    {0x4417053, "Microchip PIC32MX764F128L", 128, 12},
+    {0x4303053, "Microchip PIC32MX775F256H", 256, 12},
+    {0x4312053, "Microchip PIC32MX775F256L", 256, 12},
+    {0x430D053, "Microchip PIC32MX775F512H", 512, 12},
+    {0x4306053, "Microchip PIC32MX775F512L", 512, 12},
+    {0x430E053, "Microchip PIC32MX795F512H", 512, 12},
+    {0x4307053, "Microchip PIC32MX795F512L", 512, 12},
     {0}
 };
 
@@ -159,7 +164,8 @@ static const struct {
     unsigned devid;
     const char *name;
 } devtab[] = {
-    { 0x000100, "R2000"                     },  /* Legacy processors */
+    /* Legacy processors */
+    { 0x000100, "R2000"                     },
     { 0x000200, "R3000"                     },
     { 0x000300, "R6000"                     },
     { 0x000400, "R4000"                     },
@@ -186,11 +192,16 @@ static const struct {
     { 0x005400, "R5432"                     },
     { 0x005500, "R5500"                     },
     { 0x006300, "Loongson2"                 },
-    { 0x018000, "MIPS Technologies 4Kc"     },  /* MIPS Technologies */
+
+    /* MIPS Technologies */
+    { 0x018000, "MIPS Technologies 4Kc"     },
     { 0x018100, "MIPS Technologies 5Kc"     },
     { 0x018200, "MIPS Technologies 20Kc"    },
+    { 0x018300, "MIPS Technologies 4Kmp"    },
     { 0x018400, "MIPS Technologies 4KEc"    },
+    { 0x018500, "MIPS Technologies 4KEmp"   },
     { 0x018600, "MIPS Technologies 4KSc"    },
+    { 0x018700, "MIPS Technologies M4K"     },
     { 0x018800, "MIPS Technologies 25Kf"    },
     { 0x018900, "MIPS Technologies 5KE"     },
     { 0x019000, "MIPS Technologies 4KEcR2"  },
@@ -203,23 +214,34 @@ static const struct {
     { 0x019900, "MIPS Technologies 1004K"   },
     { 0x019a00, "MIPS Technologies 1074K"   },
     { 0x019c00, "MIPS Technologies M14Kc"   },
-    { 0x024000, "Broadcom BCM4710"          },  /* Broadcom */
+    { 0x019e00, "MIPS Technologies M14KEc"  },
+
+    /* Broadcom */
+    { 0x024000, "Broadcom BCM4710"          },
     { 0x029000, "Broadcom BCM6338"          },
     { 0x028000, "Broadcom BCM6345"          },
     { 0x029100, "Broadcom BCM6348"          },
     { 0x02A000, "Broadcom BCM4350"          },
     { 0x020000, "Broadcom BCM6358"          },
-    { 0x040100, "SiByte SB1"                },  /* SiByte */
+
+    /* SiByte */
+    { 0x040100, "SiByte SB1"                },
     { 0x041100, "SiByte SB1A"               },
-    { 0x050400, "SandCraft SR71000"         },  /* SandCraft */
-    { 0x0d0000, "Cavium CN38XX"             },  /* Cavium */
+
+    /* SandCraft */
+    { 0x050400, "SandCraft SR71000"         },
+
+    /* Cavium */
+    { 0x0d0000, "Cavium CN38XX"             },
     { 0x0d0100, "Cavium CN31XX"             },
     { 0x0d0200, "Cavium CN30XX"             },
     { 0x0d0300, "Cavium CN58XX"             },
     { 0x0d0400, "Cavium CN56XX"             },
     { 0x0d0600, "Cavium CN50XX"             },
     { 0x0d0700, "Cavium CN52XX"             },
-    { 0xd00200, "Ingenic JZRISC"            },  /* Ingenic */
+
+    /* Ingenic */
+    { 0xd00200, "Ingenic JZRISC"            },
     { 0 }
 };
 
