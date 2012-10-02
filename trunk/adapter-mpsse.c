@@ -514,10 +514,7 @@ static void mpsse_reset_cpu (adapter_t *adapter)
     mpsse_adapter_t *a = (mpsse_adapter_t*) adapter;
     unsigned ctl;
 
-    /* Set EJTAGBOOT mode - request a Debug exception on reset.
-     * Clear a 'reset occured' flag. */
-    ctl = (a->control & ~CONTROL_ROCC) | CONTROL_EJTAGBRK;
-
+    /* Set EJTAGBOOT mode - request a Debug exception on reset. */
     if (a->is_microchip) {
         mpsse_send (a, 6, 31, 0, 0, 0);                 /* TMS 1-1-1-1-1-0 */
         mpsse_send (a, 1, 1, 5, TAP_SW_ETAP, 0);
@@ -530,14 +527,16 @@ static void mpsse_reset_cpu (adapter_t *adapter)
         mpsse_send (a, 1, 1, 5, TAP_SW_ETAP, 0);
     } else {
         // TODO: generic MIPS processor.
+        // Use bit PRRST to reset a processor.
         fprintf (stderr, "mpsse_reset_cpu: not implemented yet\n");
     }
 
     /* Set EjtagBrk bit - request a Debug exception.
      * Clear a 'reset occured' flag. */
+    ctl = (a->control & ~CONTROL_ROCC) | CONTROL_EJTAGBRK;
     mpsse_send (a, 1, 1, 5, ETAP_CONTROL, 0);
-    mpsse_send (a, 0, 0, 32, (a->control & ~CONTROL_ROCC) |
-                             CONTROL_EJTAGBRK, 1);
+    mpsse_send (a, 0, 0, 32, ctl, 1);
+
     ctl = mpsse_recv (a);
     if (debug_level > 0)
         fprintf (stderr, "mpsse_reset_cpu: control = %08x\n", ctl);
@@ -579,8 +578,9 @@ static void mpsse_stop_cpu (adapter_t *adapter)
     while (! (ctl & CONTROL_DM)) {
         /* Set EjtagBrk bit - request a Debug exception.
          * Clear a 'reset occured' flag. */
-        mpsse_send (a, 0, 0, 32, (a->control & ~CONTROL_ROCC) |
-                                 CONTROL_EJTAGBRK, 1);
+        ctl = (a->control & ~CONTROL_ROCC) | CONTROL_EJTAGBRK;
+        mpsse_send (a, 0, 0, 32, ctl, 1);
+
         ctl = mpsse_recv (a);
         if (debug_level > 0)
             fprintf (stderr, "stop_cpu: control = %08x\n", ctl);
