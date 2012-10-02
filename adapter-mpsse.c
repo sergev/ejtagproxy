@@ -916,8 +916,8 @@ failed:
     /* Light a LED. */
     mpsse_reset (a, 0, 0, 1);
 
-    /* By default, use 500 kHz speed. */
-    int khz = 500;
+    /* By default, use 1MHz speed. */
+    int khz = 1000;
     mpsse_speed (a, khz);
 
     /* Disable TDI to TDO loopback. */
