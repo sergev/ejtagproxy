@@ -645,6 +645,9 @@ static int handle_kill_command(char * const in_buf,
     int ret;
 
     t->kill();
+    rp_log(RP_VAL_LOGLEVEL_INFO,
+           "%s: session finished",
+           name);
 
     if (!extended_protocol)
     {
@@ -656,21 +659,13 @@ static int handle_kill_command(char * const in_buf,
             /* If the current target cannot restart, we have little choice but
                to exit right now. */
             rp_log(RP_VAL_LOGLEVEL_INFO,
-                   "%s: session killed. Exiting",
+                   "%s: exiting",
                    name);
             dbg_sock_cleanup();
             exit(0);
         }
-
-        rp_log(RP_VAL_LOGLEVEL_INFO,
-               "%s: session killed. Will wait for a new connection",
-               name);
         return  FALSE;
     }
-
-    rp_log(RP_VAL_LOGLEVEL_INFO,
-           "%s: remote proxy restarting",
-           name);
 
     /* Let us do our best while starting system */
     if (!can_restart)

@@ -4,6 +4,7 @@
  * 1) Olimex ARM-USB-Tiny adapter
  * 2) Olimex ARM-USB-Tiny-H adapter
  * 3) Bus Blaster v2 from Dangerous Prototypes
+ * 4) TinCanTools Flyswatter adapter
  *
  * Copyright (C) 2011-2012 Serge Vakulenko
  *
@@ -65,6 +66,8 @@ typedef struct {
     unsigned trst_control, trst_inverted;
     unsigned sysrst_control, sysrst_inverted;
     unsigned led_control, led_inverted;
+    unsigned dir_control;
+    unsigned mhz;
 
     /* Manufacturer-specific information. */
     int is_microchip;
@@ -365,56 +368,78 @@ static unsigned long long mpsse_recv (mpsse_adapter_t *a)
  */
 static void mpsse_reset (mpsse_adapter_t *a, int trst, int sysrst, int led)
 {
-    unsigned char output [3];
-    unsigned low_output = 0x08; /* TCK idle high */
-    unsigned low_direction = 0x1b;
-    unsigned high_direction = 0x0f;
-    unsigned high_output = 0;
-
-    /* command "set data bits low byte" */
-    output [0] = 0x80;
-    output [1] = low_output;
-    output [2] = low_direction;
-    bulk_write (a, output, 3);
+    unsigned char buf [3];
+    unsigned output    = 0x0008;                    /* TCK idle high */
+    unsigned direction = 0x000b | a->dir_control;
 
     if (trst)
-        high_output |= a->trst_control;
+        output |= a->trst_control;
     if (a->trst_inverted)
-        high_output ^= a->trst_control;
+        output ^= a->trst_control;
 
     if (sysrst)
-        high_output |= a->sysrst_control;
+        output |= a->sysrst_control;
     if (a->sysrst_inverted)
-        high_output ^= a->sysrst_control;
+        output ^= a->sysrst_control;
 
     if (led)
-        high_output |= a->led_control;
+        output |= a->led_control;
     if (a->led_inverted)
-        high_output ^= a->led_control;
+        output ^= a->led_control;
+
+    /* command "set data bits low byte" */
+    buf [0] = 0x80;
+    buf [1] = output;
+    buf [2] = direction;
+    bulk_write (a, buf, 3);
 
     /* command "set data bits high byte" */
-    output [0] = 0x82;
-    output [1] = high_output;
-    output [2] = high_direction;
+    buf [0] = 0x82;
+    buf [1] = output >> 8;
+    buf [2] = direction >> 8;
+    bulk_write (a, buf, 3);
 
-    bulk_write (a, output, 3);
-    if (debug_level > 1)
-        fprintf (stderr, "mpsse_reset (trst=%d, sysrst=%d) high_output=0x%2.2x, high_direction: 0x%2.2x\n",
-            trst, sysrst, high_output, high_direction);
+    if (debug_level)
+        fprintf (stderr, "mpsse_reset (trst=%d, sysrst=%d) output=%04x, direction: %04x\n",
+            trst, sysrst, output, direction);
 }
 
 /*
  * Set a JTAG speed for FT2232 chip.
  */
-static void mpsse_speed (mpsse_adapter_t *a, int divisor)
+static void mpsse_speed (mpsse_adapter_t *a, int khz)
 {
     unsigned char output [3];
+    int divisor = (a->mhz * 2000 / khz + 1) / 2 - 1;
 
-    /* command "set TCK divisor" */
+    if (divisor < 0)
+        divisor = 0;
+    if (debug_level)
+    	fprintf (stderr, "%s: divisor: %u\n", a->adapter.name, divisor);
+
+    if (a->mhz > 6) {
+        /* Use 60MHz master clock (disable divide by 5). */
+        output [0] = 0x8A;
+
+        /* Turn off adaptive clocking. */
+        output [1] = 0x97;
+
+        /* Disable three-phase clocking. */
+        output [2] = 0x8D;
+        bulk_write (a, output, 3);
+    }
+
+    /* Command "set TCK divisor". */
     output [0] = 0x86;
     output [1] = divisor;
     output [2] = divisor >> 8;
     bulk_write (a, output, 3);
+
+    if (debug_level) {
+        khz = (a->mhz * 2000 / (divisor + 1) + 1) / 2;
+        fprintf (stderr, "%s: clock rate %.1f MHz\n",
+            a->adapter.name, khz / 1000.0);
+    }
 }
 
 /*
@@ -753,27 +778,33 @@ adapter_t *adapter_open_mpsse (void)
             if (dev->descriptor.idVendor == OLIMEX_VID &&
                 dev->descriptor.idProduct == OLIMEX_ARM_USB_TINY) {
                 a->adapter.name = "Olimex ARM-USB-Tiny";
-                a->trst_control = 1;
-                a->trst_inverted = 1;
-                a->sysrst_control = 2;
-                a->led_control = 8;
+                a->mhz = 6;
+                a->dir_control    = 0x0f10;
+                a->trst_control   = 0x0100;
+                a->trst_inverted  = 1;
+                a->sysrst_control = 0x0200;
+                a->led_control    = 0x0800;
                 goto found;
             }
             if (dev->descriptor.idVendor == OLIMEX_VID &&
                 dev->descriptor.idProduct == OLIMEX_ARM_USB_TINY_H) {
                 a->adapter.name = "Olimex ARM-USB-Tiny-H";
-                a->trst_control = 1;
-                a->trst_inverted = 1;
-                a->sysrst_control = 2;
-                a->led_control = 8;
+                a->mhz = 30;
+                a->dir_control    = 0x0f10;
+                a->trst_control   = 0x0100;
+                a->trst_inverted  = 1;
+                a->sysrst_control = 0x0200;
+                a->led_control    = 0x0800;
                 goto found;
             }
             if (dev->descriptor.idVendor == DP_BUSBLASTER_VID &&
                 dev->descriptor.idProduct == DP_BUSBLASTER_PID) {
                 a->adapter.name = "Dangerous Prototypes Bus Blaster";
-                a->trst_control = 1;
-                a->trst_inverted = 1;
-                a->sysrst_control = 2;
+                a->mhz = 30;
+                a->dir_control     = 0x0f10;
+                a->trst_control    = 0x0100;
+                a->trst_inverted   = 1;
+                a->sysrst_control  = 0x0200;
                 a->sysrst_inverted = 1;
                 goto found;
             }
@@ -789,15 +820,36 @@ found:
         free (a);
         return 0;
     }
+    if (dev->descriptor.iProduct) {
+        char product [256];
+        if (usb_get_string_simple (a->usbdev, dev->descriptor.iProduct,
+                                   product, sizeof(product)) > 0)
+        {
+            if (strcmp ("Flyswatter", product) == 0) {
+                /* TinCanTools Flyswatter.
+                 * PID/VID the same as Dangerous Prototypes Bus Blaster. */
+                a->adapter.name = "TinCanTools Flyswatter";
+                a->mhz = 6;
+                a->dir_control     = 0x0cf0;
+                a->trst_control    = 0x0010;
+                a->trst_inverted   = 1;
+                a->sysrst_control  = 0x0020;
+                a->sysrst_inverted = 0;
+                a->led_control     = 0x0c00;
+                a->led_inverted    = 1;
+            }
+        }
+    }
+
 #if ! defined (__CYGWIN32__) && ! defined (MINGW32)
     char driver_name [100];
     if (usb_get_driver_np (a->usbdev, 0, driver_name, sizeof(driver_name)) == 0) {
 	if (usb_detach_kernel_driver_np (a->usbdev, 0) < 0) {
-	   printf("%s: failed to detach the %s kernel driver.\n",
+            printf("%s: failed to detach the %s kernel driver.\n",
                 a->adapter.name, driver_name);
-	   usb_close (a->usbdev);
-	   free (a);
-	   return 0;
+            usb_close (a->usbdev);
+            free (a);
+            return 0;
 	}
     }
 #endif
@@ -828,13 +880,8 @@ failed:
         goto failed;
     }
 
-    /* Optimal rate is 0.5 MHz.
-     * Divide base oscillator 6 MHz by 12.
-     * Calculated as TCK/SK = 12 MHz / (1 + divisor)*2. */
-    unsigned divisor = 12 - 1;
-    unsigned char latency_timer = 2;
-    if (dev->descriptor.idProduct == OLIMEX_ARM_USB_TINY_H)
-        latency_timer = 0;
+    /* Optimal latency timer is 1 for slow mode and 0 for fast mode. */
+    unsigned latency_timer = (a->mhz > 6) ? 0 : 1;
 
     /* Set latency timer. */
     if (usb_control_msg (a->usbdev,
@@ -850,19 +897,15 @@ failed:
         fprintf (stderr, "%s: unable to get latency timer\n", a->adapter.name);
         goto failed;
     }
-    if (debug_level) {
-    	fprintf (stderr, "%s: divisor: %u\n", a->adapter.name, divisor);
+    if (debug_level)
     	fprintf (stderr, "%s: latency timer: %u usec\n", a->adapter.name, latency_timer);
-    }
 
     /* Light a LED. */
     mpsse_reset (a, 0, 0, 1);
 
-    if (debug_level) {
-        int baud = 6000000 / (divisor + 1);
-        fprintf (stderr, "%s: speed %d samples/sec\n", a->adapter.name, baud);
-    }
-    mpsse_speed (a, divisor);
+    /* By default, use 500 kHz speed. */
+    int khz = 500;
+    mpsse_speed (a, khz);
 
     /* Disable TDI to TDO loopback. */
     unsigned char enable_loopback[] = "\x85";
