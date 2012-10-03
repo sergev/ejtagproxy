@@ -392,10 +392,9 @@ static int mips_read_registers(uint8_t *data_buf,
         target_stop (target.device);
     }
 
-    /* Show only CPU and CP0 registers.
-     * A debugger will ask for FPU registers separately. */
+    /* Show all CPU, CP0 and FPU registers. */
     int i;
-    for (i=0; i<RP_MIPS_REGNUM_FP0; i++) {
+    for (i=0; i<=RP_MIPS_REGNUM_FIR; i++) {
         unsigned val = target_read_register (target.device, i);
         memcpy (data_buf + i*sizeof(unsigned), &val, sizeof(unsigned));
         memset (avail_buf + i*sizeof(unsigned), 1, sizeof(unsigned));
