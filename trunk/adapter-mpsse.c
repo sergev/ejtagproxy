@@ -1,10 +1,12 @@
 /*
  * Interface to PIC32 JTAG port via FT2232-based USB adapter.
  * Supported hardware:
- * 1) Olimex ARM-USB-Tiny adapter
- * 2) Olimex ARM-USB-Tiny-H adapter
- * 3) Bus Blaster v2 from Dangerous Prototypes
- * 4) TinCanTools Flyswatter adapter
+ *  - Olimex ARM-USB-Tiny adapter
+ *  - Olimex ARM-USB-Tiny-H adapter
+ *  - Olimex ARM-USB-OCD-H adapter
+ *  - Olimex MIPS-USB-OCD-H adapter
+ *  - Bus Blaster v2 from Dangerous Prototypes
+ *  - TinCanTools Flyswatter adapter
  *
  * Copyright (C) 2011-2012 Serge Vakulenko
  *
@@ -93,6 +95,7 @@ typedef struct {
 #define OLIMEX_ARM_USB_TINY     0x0004  /* ARM-USB-Tiny */
 #define OLIMEX_ARM_USB_TINY_H   0x002a	/* ARM-USB-Tiny-H */
 #define OLIMEX_ARM_USB_OCD_H    0x002b	/* ARM-USB-OCD-H */
+#define OLIMEX_MIPS_USB_OCD_H   0x0036	/* MIPS-USB-OCD-H */
 
 #define DP_BUSBLASTER_VID       0x0403
 #define DP_BUSBLASTER_PID       0x6010  /* Bus Blaster v2 */
@@ -356,7 +359,6 @@ static unsigned long long mpsse_recv (mpsse_adapter_t *a)
     unsigned long long word;
 
     /* Send a packet. */
-//a->output [a->bytes_to_write++] = 0x87;
     mpsse_flush_output (a);
 
     /* Process a reply: one 64-bit word. */
@@ -419,7 +421,7 @@ static void mpsse_speed (mpsse_adapter_t *a, int khz)
     	fprintf (stderr, "%s: divisor: %u\n", a->adapter.name, divisor);
 
     if (a->mhz > 6) {
-        /* Use 60MHz master clock (disable divide by 5). */
+        /* Use 30MHz master clock (disable divide by 5). */
         output [0] = 0x8A;
 
         /* Turn off adaptive clocking. */
@@ -807,7 +809,18 @@ adapter_t *adapter_open_mpsse (void)
                 a->trst_inverted   = 1;
                 a->sysrst_control  = 0x0200;
                 a->led_control     = 0x0800;
-                a->sysrst_inverted = 1;         /* changed for mips */
+                goto found;
+            }
+            if (dev->descriptor.idVendor == OLIMEX_VID &&
+                dev->descriptor.idProduct == OLIMEX_MIPS_USB_OCD_H) {
+                a->adapter.name = "Olimex MIPS-USB-OCD-H";
+                a->mhz = 30;
+                a->dir_control     = 0x0f10;
+                a->trst_control    = 0x0100;
+                a->trst_inverted   = 1;
+                a->sysrst_control  = 0x0200;
+                a->led_control     = 0x0800;
+                a->sysrst_inverted = 1;
                 goto found;
             }
             if (dev->descriptor.idVendor == DP_BUSBLASTER_VID &&
