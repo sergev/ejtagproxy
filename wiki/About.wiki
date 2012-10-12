@@ -7,7 +7,10 @@ Supported adapters:
  * [http://www.microchip.com/stellent/idcplg?IdcService=SS_GET_PAGE&nodeId=1406&dDocName=en538340 Microchip PICkit3] with scripting firmware (use [http://ww1.microchip.com/downloads/en/DeviceDoc/PICkit3_scripting_v03.00beta.zip Scripting Tool] to upgrade)
  * [http://www.olimex.com/dev/arm-usb-tiny.html Olimex ARM-USB-Tiny] JTAG adapter
  * [http://www.olimex.com/dev/arm-usb-tiny-h.html Olimex ARM-USB-Tiny-H] JTAG adapter
+ * [https://www.olimex.com/Products/ARM/JTAG/ARM-USB-OCD-H/ Olimex ARM-USB-OCD-H] JTAG adapter
+ * [https://www.olimex.com/Products/ARM/JTAG/ARM-USB-OCD-H/ Olimex MIPS-USB-OCD-H] JTAG adapter
  * [http://dangerousprototypes.com/docs/Bus_Blaster_v2_design_overview Bus Blaster v2] JTAG adapter from Dangerous Prototypes
+ * [http://www.tincantools.com/product.php?productid=16134 Flyswatter] JTAG adapter from TinCanTools
 
 || [http://ejtagproxy.googlecode.com/svn/wiki/images/pickit2.png] || [http://ejtagproxy.googlecode.com/svn/wiki/images/pickit3.png] || [http://ejtagproxy.googlecode.com/svn/wiki/images/arm-usb-tiny.png] ||
 
