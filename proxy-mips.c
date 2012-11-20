@@ -44,7 +44,7 @@
  * Register numbering should match GDB.
  */
 #define RP_MIPS_MIN_ADDRESS             0x0U
-#define RP_MIPS_MAX_ADDRESS             0xFFFFFFFF
+#define RP_MIPS_MAX_ADDRESS             0xFF000000
 #define RP_MIPS_NUM_REGS                72
 #define RP_MIPS_REG_BYTES               (RP_MIPS_NUM_REGS*sizeof(unsigned))
 #define RP_MIPS_REGNUM_SP               29 /* Stack pointer */
