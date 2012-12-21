@@ -857,9 +857,9 @@ static void handle_query_command(char * const in_buf,
         {
             sprintf(out_buf,
                     "Text=%Lx;Data=%Lx;Bss=%Lx",
-                    text,
-                    data,
-                    bss);
+                    (unsigned long long) text,
+                    (unsigned long long) data,
+                    (unsigned long long) bss);
         }
         else
         {
@@ -956,7 +956,7 @@ static void handle_query_command(char * const in_buf,
         ret = t->current_thread_query(&ref);
 
         if (ret == RP_VAL_TARGETRET_OK)
-            sprintf(out_buf, "QC%Lx", ref.val);
+            sprintf(out_buf, "QC%Lx", (unsigned long long) ref.val);
         else
             rp_write_retval(ret, out_buf);
         break;
@@ -2294,7 +2294,7 @@ static int rp_encode_process_query_response(unsigned int mask,
     out_size -= 8;
 
     /* Encode reference thread */
-    sprintf(out, "%016Lx", ref->val);
+    sprintf(out, "%016Lx", (unsigned long long) ref->val);
 
     out += 16;
     out_size -= 16;
@@ -2327,7 +2327,7 @@ static int rp_encode_process_query_response(unsigned int mask,
             out_size -= 2;
 
             /* Encode value */
-            sprintf(out, "%016Lx", info->thread_id.val);
+            sprintf(out, "%016Lx", (unsigned long long) info->thread_id.val);
 
             out += 16;
             out_size -= 16;
@@ -2443,7 +2443,7 @@ static int rp_encode_list_query_response(size_t count,
     *out++ = (done)  ?  '1'  :  '0';
     out_size--;
 
-    sprintf(out, "%016Lx", arg->val);
+    sprintf(out, "%016Lx", (unsigned long long) arg->val);
 
     out += 16;
     out_size -= 16;
@@ -2454,7 +2454,7 @@ static int rp_encode_list_query_response(size_t count,
         if (out_size <= 16)
             return  FALSE;
 
-        sprintf(out, "%016Lx", found->val);
+        sprintf(out, "%016Lx", (unsigned long long) found->val);
 
         out += 16;
         out_size -= 16;
