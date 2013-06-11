@@ -1,6 +1,5 @@
 /*
  * Interface to a standard MIPS EJTAG debug port.
- * Currently only PIC32 microcontrollers are supported.
  * This file is independent of any JTAG or ICSP adapter used.
  * Most of codelets borrowed from OpenOCD project.
  *
