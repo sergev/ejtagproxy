@@ -477,6 +477,12 @@ static unsigned mpsse_get_idcode (adapter_t *adapter)
     mpsse_adapter_t *a = (mpsse_adapter_t*) adapter;
     unsigned idcode;
 
+    /* Issue TAP reset for 100msec.
+     * Required for Ingenic JZ4780. */
+    mpsse_reset (a, 1, 0, 1);
+    usleep(100000);
+    mpsse_reset (a, 0, 0, 1);
+
     /* Reset the JTAG TAP controller: TMS 1-1-1-1-1-0.
      * After reset, the IDCODE register is always selected.
      * Read out 32 bits of data. */
