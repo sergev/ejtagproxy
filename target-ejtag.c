@@ -165,7 +165,7 @@ static const struct {
 } devtab[] = {
     /* Legacy processors */
     { 0x000100, "R2000"                     },
-    { 0x000200, "R3000"                     },
+//  { 0x000200, "R3000"                     },
     { 0x000300, "R6000"                     },
     { 0x000400, "R4000"                     },
     { 0x000600, "R6000A"                    },
@@ -241,6 +241,8 @@ static const struct {
 
     /* Ingenic */
     { 0xd00200, "Ingenic JZRISC"            },
+    { 0x000200, "Ingenic JZ4780"            },
+    { 0xe10200, "Ingenic JZ4780"            },
     { 0 }
 };
 
@@ -344,6 +346,8 @@ static void target_save_state (target_t *t)
         MIPS_LW (1, 0, 15),                         /* lw $1,($15) */
         MIPS_B (NEG16(58)),                         /* b start */
         MIPS_MFC0 (15, 31, 0),                      /* move COP0 DeSave to $15 */
+        MIPS_NOP,
+        MIPS_NOP,
     };
 
     t->adapter->exec (t->adapter, 1, ARRAY_SIZE(code), code,
@@ -461,6 +465,8 @@ static unsigned set_osccon (target_t *t, unsigned osccon)
         MIPS_LW (7, 0, 15),			/* lw $7,($15) */
         MIPS_B (NEG16(22)),			/* b start */
         MIPS_MFC0 (15, 31, 0),                  /* move COP0 DeSave to $15 */
+        MIPS_NOP,
+        MIPS_NOP,
     };
     t->adapter->exec (t->adapter, 1, ARRAY_SIZE(code), code,
         1, &osccon, 0, 0);
@@ -714,6 +720,8 @@ void target_resume (target_t *t)
 {
     static const unsigned code[] = {
         MIPS_DRET,                            /* return from debug mode */
+        MIPS_NOP,
+        MIPS_NOP,
     };
 
     if (t->is_running)
@@ -734,6 +742,8 @@ void target_run (target_t *t, unsigned addr)
 	MIPS_MTC0 (15, 24, 0),                      /* move $15 to COP0 DEPC */
 	MIPS_MFC0 (15, 31, 0),                      /* move COP0 DeSave to $15 */
         MIPS_DRET,                                  /* return from debug mode */
+        MIPS_NOP,
+        MIPS_NOP,
     };
 
     if (t->is_running)
@@ -765,6 +775,8 @@ void target_step (target_t *t)
         MIPS_MTC0 (1, 23, 0),			/* move $1 to COP0 Debug */
         MIPS_MFC0 (1, 31, 0),			/* move COP0 DeSave to $1 */
         MIPS_DRET,                              /* return from debug mode */
+        MIPS_NOP,
+        MIPS_NOP,
     };
     static const unsigned code_step_disable[] = {
         MIPS_MTC0 (15, 31, 0),                  /* move $15 to COP0 DeSave */
@@ -781,6 +793,8 @@ void target_step (target_t *t)
         MIPS_LW (1, 0, 15),
         MIPS_B (NEG16(13)),
         MIPS_MFC0 (15, 31, 0),                  /* move COP0 DeSave to $15 */
+        MIPS_NOP,
+        MIPS_NOP,
     };
 
     if (t->is_running)
@@ -813,6 +827,8 @@ unsigned target_read_word (target_t *t, unsigned addr)
         MIPS_LW (8, 0, 15),			/* lw $8,($15) */
         MIPS_B (NEG16(9)),			/* b start */
         MIPS_MFC0 (15, 31, 0),                  /* move COP0 DeSave to $15 */
+        MIPS_NOP,
+        MIPS_NOP,
     };
     unsigned word;
 
@@ -867,6 +883,8 @@ void target_read_block (target_t *t, unsigned addr,
         MIPS_LW (8, 0, 15),			/* lw $8,($15) */
         MIPS_B (NEG16(27)),			/* b start */
         MIPS_MFC0 (15, 31, 0),                  /* move COP0 DeSave to $15 */
+        MIPS_NOP,
+        MIPS_NOP,
     };
     int n, nread;
     unsigned param_in[2];
@@ -910,6 +928,8 @@ void target_write_word (target_t *t, unsigned addr, unsigned word)
         MIPS_LW (8, 0, 15),			/* lw $8,($15) */
         MIPS_B (NEG16(11)),			/* b start */
         MIPS_MFC0 (15, 31, 0),                  /* move COP0 DeSave to $15 */
+        MIPS_NOP,
+        MIPS_NOP,
     };
     unsigned param_in [2];
 
@@ -952,6 +972,8 @@ void target_write_block (target_t *t, unsigned addr,
         MIPS_LW (8, 0, 15),			/* lw $8,($15) */
         MIPS_B (NEG16(21)),			/* b start */
         MIPS_MFC0 (15, 31, 0),                  /* move COP0 DeSave to $15 */
+        MIPS_NOP,
+        MIPS_NOP,
     };
     unsigned param_in [nwords + 2];
 
@@ -984,6 +1006,8 @@ void target_write_register (target_t *t, unsigned regno, unsigned val)
         0,                                      /* lui regno, upper_val */
         MIPS_B (NEG16(2)),			/* b start */
         0,                                      /* ori regno, lower_val */
+        MIPS_NOP,
+        MIPS_NOP,
     };
     static unsigned code[] = {                  /* start: */
         MIPS_MTC0 (15, 31, 0),                  /* move $15 to COP0 DeSave */
@@ -992,6 +1016,8 @@ void target_write_register (target_t *t, unsigned regno, unsigned val)
         0,                                      /* mtlo, mthi or mtc0 */
         MIPS_B (NEG16(5)),			/* b start */
         MIPS_MFC0 (15, 31, 0),                  /* move COP0 DeSave to $15 */
+        MIPS_NOP,
+        MIPS_NOP,
     };
 
     if (regno < 32) {
@@ -1048,6 +1074,8 @@ unsigned target_read_cop0_register (target_t *t, unsigned regno, unsigned sel)
         MIPS_LW (8, 0, 15),			/* lw $8,($15) */
         MIPS_B (NEG16(8)),			/* b start */
         MIPS_MFC0 (15, 31, 0),                  /* move COP0 DeSave to $15 */
+        MIPS_NOP,
+        MIPS_NOP,
     };
     unsigned word;
 
