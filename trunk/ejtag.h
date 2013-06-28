@@ -52,6 +52,14 @@
 #define MTAP_COMMAND    7       // Connect to MCHP command register
 
 /*
+ * Ingenic-specific instructions.
+ */
+#define ITAP_EN_CORE0   20      // Select core 0
+#define ITAP_EN_CORE1   21      // Select core 1
+#define ITAP_EN_CORE2   22      // Select core 2
+#define ITAP_EN_CORE3   23      // Select core 3
+
+/*
  * Microchip DR commands (8-bit).
  */
 #define MCHP_STATUS        0x00 // Return Status

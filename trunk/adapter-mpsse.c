@@ -73,6 +73,7 @@ typedef struct {
 
     /* Manufacturer-specific information. */
     int is_microchip;
+    int is_ingenic;
 
     /* EJTAG Control register. */
     unsigned control;
@@ -457,7 +458,8 @@ static void mpsse_close (adapter_t *adapter, int power_on)
         mpsse_send (a, 1, 1, 5, TAP_SW_ETAP, 0);
         mpsse_send (a, 6, 31, 0, 0, 0);             /* TMS 1-1-1-1-1-0 */
     } else {
-        // TODO
+        /* Clear EJTAGBOOT mode. */
+        mpsse_send (a, 6, 31, 0, 0, 0);             /* TMS 1-1-1-1-1-0 */
     }
     mpsse_flush_output (a);
 
@@ -534,9 +536,16 @@ static void mpsse_reset_cpu (adapter_t *adapter)
         mpsse_send (a, 0, 0, 8, MCHP_FLASH_ENABLE, 0);
         mpsse_send (a, 1, 1, 5, TAP_SW_ETAP, 0);
     } else {
-        // TODO: generic MIPS processor.
-        // Use bit PRRST to reset a processor.
-        fprintf (stderr, "mpsse_reset_cpu: not implemented yet\n");
+        /* Generic MIPS processor. */
+        if (a->is_ingenic) {                            /* Ingenic-specific */
+            mpsse_send (a, 1, 1, 5, ITAP_EN_CORE0, 0);  /* enable core 0. */
+        }
+        mpsse_send (a, 1, 1, 5, ETAP_EJTAGBOOT, 0);     /* stop on boot vector */
+
+        /* Set PrRst bit to reset the processor. */
+        ctl = a->control | CONTROL_ROCC | CONTROL_PRRST;
+        mpsse_send (a, 1, 1, 5, ETAP_CONTROL, 0);
+        mpsse_send (a, 0, 0, 32, ctl, 0);
     }
 
     /* Set EjtagBrk bit - request a Debug exception.
@@ -857,7 +866,7 @@ found:
         if (usb_get_string_simple (a->usbdev, dev->descriptor.iProduct,
                                    product, sizeof(product)) > 0)
         {
-            if (strcmp ("Flyswatter", product) == 0) {
+            if (strcmp ("Flyswatter", product) == 0 || strcmp ("Flyswatter2", product) == 0) {
                 /* TinCanTools Flyswatter.
                  * PID/VID the same as Dangerous Prototypes Bus Blaster. */
                 a->adapter.name = "TinCanTools Flyswatter";
@@ -951,6 +960,8 @@ failed:
     idcode = mpsse_recv (a);
     if ((idcode & 0xfff) == 0x053)
         a->is_microchip = 1;
+    else if (idcode == 0x0000024f)
+        a->is_ingenic = 1;
 
     /* Check Microchip status. */
     if (a->is_microchip) {
