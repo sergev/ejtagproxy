@@ -474,7 +474,7 @@ static void pickit_exec (adapter_t *adapter, int stay_in_debug_mode,
 {
     pickit_adapter_t *a = (pickit_adapter_t*) adapter;
     unsigned ctl, address;
-    int loop_count = 0, poll_count;
+    int access_count = 0, poll_count;
 
     a->local_iparam = param_in;
     a->local_oparam = param_out;
@@ -529,11 +529,12 @@ static void pickit_exec (adapter_t *adapter, int stay_in_debug_mode,
             /* Check to see if its reading at the debug vector. The first pass through
              * the module is always read at the vector, so the first one we allow.  When
              * the second read from the vector occurs we are done and just exit. */
-            if ((address == PRACC_TEXT) && loop_count++ > 0) {
+            if (address == PRACC_TEXT && access_count > 0) {
                 break;
             }
             pracc_exec_read (a, address);
         }
+        access_count++;
     }
 done:
     /* Stack sanity check */
