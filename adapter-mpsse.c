@@ -541,11 +541,6 @@ static void mpsse_reset_cpu (adapter_t *adapter)
             mpsse_send (a, 1, 1, 5, ITAP_EN_CORE0, 0);  /* enable core 0. */
         }
         mpsse_send (a, 1, 1, 5, ETAP_EJTAGBOOT, 0);     /* stop on boot vector */
-
-        /* Set PrRst bit to reset the processor. */
-        ctl = a->control | CONTROL_ROCC | CONTROL_PRRST;
-        mpsse_send (a, 1, 1, 5, ETAP_CONTROL, 0);
-        mpsse_send (a, 0, 0, 32, ctl, 0);
     }
 
     /* Set EjtagBrk bit - request a Debug exception.
@@ -711,14 +706,14 @@ static void pracc_exec_write (mpsse_adapter_t *a, unsigned address)
  * special regions in debug memory segment.  A separate stack region
  * exists for temporary storage.
  */
-static void mpsse_exec (adapter_t *adapter, int cycle,
+static void mpsse_exec (adapter_t *adapter, int stay_in_debug_mode,
     int code_len, const unsigned *code,
     int num_param_in, unsigned *param_in,
     int num_param_out, unsigned *param_out)
 {
     mpsse_adapter_t *a = (mpsse_adapter_t*) adapter;
     unsigned ctl, address;
-    int pass = 0;
+    int loop_count = 0, poll_count;
 
     a->local_iparam = param_in;
     a->local_oparam = param_out;
@@ -733,12 +728,19 @@ static void mpsse_exec (adapter_t *adapter, int cycle,
         mpsse_send (a, 1, 1, 5, ETAP_CONTROL, 0);
 
 	/* Wait for the PrAcc to become "1". */
-        do {
+        for (poll_count=0; ; poll_count++) {
             mpsse_send (a, 0, 0, 32, a->control, 1);
             ctl = mpsse_recv (a);
             if (debug_level > 1)
                 fprintf (stderr, "exec: ctl = %08x\n", ctl);
-        } while (! (ctl & CONTROL_PRACC));
+            if (ctl & CONTROL_PRACC)
+                break;
+
+            /* No pending access from the processor. */
+            if (! stay_in_debug_mode && poll_count > 2) {
+                goto done;
+            }
+        }
 
         /* Read Address register. */
         mpsse_send (a, 1, 1, 5, ETAP_ADDRESS, 0);
@@ -754,16 +756,13 @@ static void mpsse_exec (adapter_t *adapter, int cycle,
             /* Check to see if its reading at the debug vector. The first pass through
              * the module is always read at the vector, so the first one we allow.  When
              * the second read from the vector occurs we are done and just exit. */
-            if ((address == PRACC_TEXT) && (pass++)) {
+            if (address == PRACC_TEXT && loop_count++ > 0) {
                 break;
             }
             pracc_exec_read (a, address);
         }
-
-        if (cycle == 0)
-            break;
     }
-
+done:
     /* Stack sanity check */
     if (a->stack_offset != 0) {
         fprintf (stderr, "%s: exec stack not zero = %d\n",

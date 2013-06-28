@@ -467,14 +467,14 @@ static void pracc_exec_write (pickit_adapter_t *a, unsigned address)
  * special regions in debug memory segment.  A separate stack region
  * exists for temporary storage.
  */
-static void pickit_exec (adapter_t *adapter, int cycle,
+static void pickit_exec (adapter_t *adapter, int stay_in_debug_mode,
     int code_len, const unsigned *code,
     int num_param_in, unsigned *param_in,
     int num_param_out, unsigned *param_out)
 {
     pickit_adapter_t *a = (pickit_adapter_t*) adapter;
     unsigned ctl, address;
-    int pass = 0;
+    int loop_count = 0, poll_count;
 
     a->local_iparam = param_in;
     a->local_oparam = param_out;
@@ -485,30 +485,36 @@ static void pickit_exec (adapter_t *adapter, int cycle,
     a->stack_offset = 0;
 
     for (;;) {
-        /* Write/read Control register. */
-        pickit_send (a, 20, CMD_CLEAR_UPLOAD_BUFFER,
-            CMD_EXECUTE_SCRIPT, 16,
-                SCRIPT_JT2_SENDCMD, TAP_SW_ETAP,    /* set ETAP mode */
-                SCRIPT_JT2_SENDCMD, ETAP_CONTROL,   /* select Control Register */
-                SCRIPT_JT2_XFERDATA32_LIT,
-                    WORD_AS_BYTES (a->control),     /* write/read Control reg */
-                SCRIPT_JT2_SENDCMD, ETAP_ADDRESS,   /* select Address Register */
-                SCRIPT_JT2_XFERDATA32_LIT,
-                    0, 0, 0, 0,                     /* read Address reg */
-            CMD_UPLOAD_DATA);
-        pickit_recv (a);
-        if (a->reply[0] != 8) {
-            fprintf (stderr, "pickit_exec: bad ctl reply length = %u\n", a->reply[0]);
-            exit (-1);
-        }
-        ctl = a->reply[1] | (a->reply[2] << 8) |
-              (a->reply[3] << 16) | (a->reply[4] << 24);
-        if (debug_level > 1)
-            fprintf (stderr, "exec: ctl = %08x\n", ctl);
-
 	/* Wait for the PrAcc to become "1". */
-        if (! (ctl & CONTROL_PRACC))
-            continue;
+        for (poll_count=0; ; poll_count++) {
+            /* Write/read Control register. */
+            pickit_send (a, 20, CMD_CLEAR_UPLOAD_BUFFER,
+                CMD_EXECUTE_SCRIPT, 16,
+                    SCRIPT_JT2_SENDCMD, TAP_SW_ETAP,    /* set ETAP mode */
+                    SCRIPT_JT2_SENDCMD, ETAP_CONTROL,   /* select Control Register */
+                    SCRIPT_JT2_XFERDATA32_LIT,
+                        WORD_AS_BYTES (a->control),     /* write/read Control reg */
+                    SCRIPT_JT2_SENDCMD, ETAP_ADDRESS,   /* select Address Register */
+                    SCRIPT_JT2_XFERDATA32_LIT,
+                        0, 0, 0, 0,                     /* read Address reg */
+                CMD_UPLOAD_DATA);
+            pickit_recv (a);
+            if (a->reply[0] != 8) {
+                fprintf (stderr, "pickit_exec: bad ctl reply length = %u\n", a->reply[0]);
+                exit (-1);
+            }
+            ctl = a->reply[1] | (a->reply[2] << 8) |
+                  (a->reply[3] << 16) | (a->reply[4] << 24);
+            if (debug_level > 1)
+                fprintf (stderr, "exec: ctl = %08x\n", ctl);
+            if (ctl & CONTROL_PRACC)
+                break;
+
+            /* No pending access from the processor. */
+            if (! stay_in_debug_mode && poll_count > 2) {
+                goto done;
+            }
+        }
 
         /* Get Address register. */
         address = a->reply[5] | (a->reply[6] << 8) |
@@ -523,16 +529,13 @@ static void pickit_exec (adapter_t *adapter, int cycle,
             /* Check to see if its reading at the debug vector. The first pass through
              * the module is always read at the vector, so the first one we allow.  When
              * the second read from the vector occurs we are done and just exit. */
-            if ((address == PRACC_TEXT) && (pass++)) {
+            if ((address == PRACC_TEXT) && loop_count++ > 0) {
                 break;
             }
             pracc_exec_read (a, address);
         }
-
-        if (cycle == 0)
-            break;
     }
-
+done:
     /* Stack sanity check */
     if (a->stack_offset != 0) {
         fprintf (stderr, "%s: exec stack not zero = %d\n",
