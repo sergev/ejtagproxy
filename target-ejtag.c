@@ -832,8 +832,13 @@ unsigned target_read_word (target_t *t, unsigned addr)
     };
     unsigned word;
 
-    t->adapter->exec (t->adapter, 1,
-        ARRAY_SIZE(code), code, 1, &addr, 1, &word);
+    if (! t->adapter->exec (t->adapter, 1,
+        ARRAY_SIZE(code), code, 1, &addr, 1, &word))
+    {
+        /* Exception: bad address. */
+        fprintf (stderr, "ERROR: cannot read address %08x\n", addr);
+        return 0;
+    }
     return word;
 }
 
@@ -898,8 +903,13 @@ void target_read_block (target_t *t, unsigned addr,
         param_in[0] = addr;
         param_in[1] = n;
 
-        t->adapter->exec (t->adapter, 1, ARRAY_SIZE(code), code,
-            ARRAY_SIZE(param_in), param_in, n, &data[nread]);
+        if (! t->adapter->exec (t->adapter, 1, ARRAY_SIZE(code), code,
+            ARRAY_SIZE(param_in), param_in, n, &data[nread]))
+        {
+            /* Exception: bad address. */
+            fprintf (stderr, "ERROR: cannot read address %08x\n", addr);
+            memset (&data[nread], 0, 4*n);
+        }
 
         nwords -= n;
         addr += n;
@@ -935,8 +945,11 @@ void target_write_word (target_t *t, unsigned addr, unsigned word)
 
     param_in[0] = addr;
     param_in[1] = word;
-    t->adapter->exec (t->adapter, 1, ARRAY_SIZE(code), code,
-        ARRAY_SIZE(param_in), param_in, 0, 0);
+    if (! t->adapter->exec (t->adapter, 1, ARRAY_SIZE(code), code,
+        ARRAY_SIZE(param_in), param_in, 0, 0))
+    {
+        fprintf (stderr, "ERROR: cannot write %08x to address %08x\n", word, addr);
+    }
 }
 
 /*
@@ -985,8 +998,11 @@ void target_write_block (target_t *t, unsigned addr,
     param_in[1] = addr + (nwords * sizeof(unsigned));	/* last address */
     memcpy (&param_in[2], data, nwords * sizeof(unsigned));
 
-    t->adapter->exec (t->adapter, 1, ARRAY_SIZE(code), code,
-        nwords + 2, param_in, 0, 0);
+    if (! t->adapter->exec (t->adapter, 1, ARRAY_SIZE(code), code,
+        nwords + 2, param_in, 0, 0))
+    {
+        fprintf (stderr, "ERROR: cannot write %u words to address %08x\n", nwords, addr);
+    }
 }
 
 /*
