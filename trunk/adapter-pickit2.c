@@ -466,8 +466,9 @@ static void pracc_exec_write (pickit_adapter_t *a, unsigned address)
  * supplied via EJTAG block.  Input and output data are mapped to
  * special regions in debug memory segment.  A separate stack region
  * exists for temporary storage.
+ * Return zero, when failed (stack disbalanced).
  */
-static void pickit_exec (adapter_t *adapter, int stay_in_debug_mode,
+static int pickit_exec (adapter_t *adapter, int stay_in_debug_mode,
     int code_len, const unsigned *code,
     int num_param_in, unsigned *param_in,
     int num_param_out, unsigned *param_out)
@@ -538,11 +539,7 @@ static void pickit_exec (adapter_t *adapter, int stay_in_debug_mode,
     }
 done:
     /* Stack sanity check */
-    if (a->stack_offset != 0) {
-        fprintf (stderr, "%s: exec stack not zero = %d\n",
-            a->adapter.name, a->stack_offset);
-        exit (-1);
-    }
+    return (a->stack_offset == 0);
 }
 
 /*

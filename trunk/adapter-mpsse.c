@@ -688,7 +688,8 @@ static void pracc_exec_write (mpsse_adapter_t *a, unsigned address)
     } else if (address == PRACC_STACK)
     {
         /* save data onto our stack */
-        a->stack [a->stack_offset++] = data;
+        offset = a->stack_offset++;
+        a->stack [offset] = data;
     } else
     {
         fprintf (stderr, "%s: error writing unexpected address %08x\n",
@@ -705,8 +706,9 @@ static void pracc_exec_write (mpsse_adapter_t *a, unsigned address)
  * supplied via EJTAG block.  Input and output data are mapped to
  * special regions in debug memory segment.  A separate stack region
  * exists for temporary storage.
+ * Return zero, when failed (stack disbalanced).
  */
-static void mpsse_exec (adapter_t *adapter, int stay_in_debug_mode,
+static int mpsse_exec (adapter_t *adapter, int stay_in_debug_mode,
     int code_len, const unsigned *code,
     int num_param_in, unsigned *param_in,
     int num_param_out, unsigned *param_out)
@@ -765,11 +767,7 @@ static void mpsse_exec (adapter_t *adapter, int stay_in_debug_mode,
     }
 done:
     /* Stack sanity check */
-    if (a->stack_offset != 0) {
-        fprintf (stderr, "%s: exec stack not zero = %d\n",
-            a->adapter.name, a->stack_offset);
-        exit (-1);
-    }
+    return (a->stack_offset == 0);
 }
 
 /*

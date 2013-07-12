@@ -38,7 +38,7 @@ struct _adapter_t {
     int (*cpu_stopped) (adapter_t *a);
     void (*reset_cpu) (adapter_t *a);
     void (*stop_cpu) (adapter_t *a);
-    void (*exec) (adapter_t *a, int cycle,
+    int (*exec) (adapter_t *a, int cycle,
                   int num_code_words, const unsigned *code,
                   int num_param_in, unsigned *param_in,
                   int num_param_out, unsigned *param_out);
