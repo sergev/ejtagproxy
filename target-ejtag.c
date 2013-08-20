@@ -953,6 +953,38 @@ void target_write_word (target_t *t, unsigned addr, unsigned word)
 }
 
 /*
+ * Flush the D-cache and invalidate I-cache on a given address.
+ */
+void target_cache_flush (target_t *t, unsigned addr)
+{
+    static const unsigned code[] = {            /* start: */
+        MIPS_MTC0 (15, 31, 0),                  /* move $15 to COP0 DeSave */
+        MIPS_LUI (15, UPPER16(PRACC_STACK)),	/* $15 = PRACC_STACK */
+        MIPS_ORI (15, 15, LOWER16(PRACC_STACK)),
+        MIPS_SW (9, 0, 15),			/* sw $9,($15) */
+
+        MIPS_LW (9, NEG16(PRACC_STACK - PRACC_PARAM_IN), 15), /* load R9 @ param_in[0] = address */
+
+        MIPS_CACHE (8+6, 0, 9),			/* cache 8+6,0($9) - writeback D cache */
+        MIPS_CACHE (0+4, 0, 9),			/* cache 0+4,0($9) - invalidate I cache */
+
+        MIPS_LW (9, 0, 15),			/* lw $9,($15) */
+        MIPS_B (NEG16(9)),			/* b start */
+        MIPS_MFC0 (15, 31, 0),                  /* move COP0 DeSave to $15 */
+        MIPS_NOP,
+        MIPS_NOP,
+    };
+    unsigned param_in [1];
+
+    param_in[0] = addr;
+    if (! t->adapter->exec (t->adapter, 1, ARRAY_SIZE(code), code,
+        ARRAY_SIZE(param_in), param_in, 0, 0))
+    {
+        fprintf (stderr, "ERROR: cannot flush cache at address %08x\n", addr);
+    }
+}
+
+/*
  * Write chunk of data to memory.
  */
 void target_write_block (target_t *t, unsigned addr,

@@ -41,6 +41,7 @@ void target_read_block (target_t *t, unsigned addr,
 void target_write_word (target_t *t, unsigned addr, unsigned word);
 void target_write_block (target_t *t, unsigned addr,
 	unsigned nwords, unsigned *data);
+void target_cache_flush (target_t *t, unsigned addr);
 
 void target_stop (target_t *t);
 void target_step (target_t *t);

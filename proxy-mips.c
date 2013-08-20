@@ -612,18 +612,22 @@ static int mips_write_mem(uint64_t addr,
     }
     unsigned offset = (addr & 3);
 
-    if (offset == 0 && write_size == 4 &&
-        target_is_rom_address (target.device, addr))
-    {
-        /* Software breakpoint: use hardware breakpoint instead. */
-        unsigned opcode = *(uint32_t*) buf;
+    unsigned need_cache_flush = 0, cache_flush_addr = 0;
+    if (offset == 0 && write_size == 4) {
+        if (target_is_rom_address (target.device, addr)) {
+            unsigned opcode = *(uint32_t*) buf;
 
-        if ((opcode & MIPS_BREAK_MASK) == MIPS_BREAK)
-            target_add_break (target.device, addr, 'b');
-        else
-            target_remove_break (target.device, addr);
-        return RP_VAL_TARGETRET_OK;
+            /* Software breakpoint in read only memory: use hardware breakpoint instead. */
+            if ((opcode & MIPS_BREAK_MASK) == MIPS_BREAK)
+                target_add_break (target.device, addr, 'b');
+            else
+                target_remove_break (target.device, addr);
+            return RP_VAL_TARGETRET_OK;
+        }
+        need_cache_flush = 1;
+        cache_flush_addr = addr;
     }
+
     if (offset != 0) {
         /* Nonaligned address.
          * Read a word and construct the value. */
@@ -681,6 +685,12 @@ static int mips_write_mem(uint64_t addr,
         memcpy ((unsigned char*) &data, buf, write_size);
         target_write_word (target.device, addr, data);
     }
+#if 1
+    // Experimental: Flush cache after writing a software break opcode.
+    if (need_cache_flush) {
+        target_cache_flush (target.device, cache_flush_addr);
+    }
+#endif
     return RP_VAL_TARGETRET_OK;
 }
 
