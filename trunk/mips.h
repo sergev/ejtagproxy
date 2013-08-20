@@ -49,6 +49,7 @@
 #define MIPS_OP_ORI	0x0D
 #define MIPS_OP_XOR	0x26
 #define MIPS_OP_SRL	0x03
+#define MIPS_OP_CACHE	0x2f
 
 #define MIPS_COP0_MF	0x00
 #define MIPS_COP0_MT	0x04
@@ -86,6 +87,7 @@
 #define MIPS_SW(reg, off, base)     MIPS_I_INST(MIPS_OP_SW, base, reg, off)
 #define MIPS_XOR(reg, val1, val2)   MIPS_R_INST(0, val1, val2, reg, 0, MIPS_OP_XOR)
 #define MIPS_SRL(reg, src, off)     MIPS_R_INST(0, 0, src, reg, off, MIPS_OP_SRL)
+#define MIPS_CACHE(op, off, base)   MIPS_I_INST(MIPS_OP_CACHE, base, op, off)
 
 #define MIPS_DRET	0x4200001F
 #define MIPS_BREAK      0x0000000D
