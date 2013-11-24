@@ -6,7 +6,7 @@ LDFLAGS		=
 
 # Linux
 ifneq (,$(wildcard /lib/i386-linux-gnu))
-    LIBS        += -lusb-1.0
+    LIBS        += -lusb-1.0 -lpthread
     HIDSRC      = hidapi/hid-libusb.c
 endif
 
