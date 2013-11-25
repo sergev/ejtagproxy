@@ -1,7 +1,7 @@
 CC		= gcc
 
 SVNVERS         = $(shell svnversion)
-CFLAGS		= -Wall -g -O -I/opt/local/include -Ihidapi -DSVNVERSION='"$(SVNVERS)"'
+CFLAGS		= -Wall -g -O -Ihidapi -DSVNVERSION='"$(SVNVERS)"'
 LDFLAGS		=
 
 # Linux
@@ -12,7 +12,8 @@ endif
 
 # Mac OS X
 ifneq (,$(wildcard /System/Library/Frameworks/CoreFoundation.framework))
-    LIBS        += -framework IOKit -framework CoreFoundation
+    LIBS        += -framework IOKit -framework CoreFoundation -L/opt/local/lib/libusb-legacy
+    CFLAGS	+= -I/opt/local/include/libusb-legacy
     HIDSRC      = hidapi/hid-mac.c
 endif
 
@@ -22,7 +23,7 @@ OBJS		= gdbproxy.o rpmisc.o target-ejtag.o hid.o \
 # Olimex ARM-USB-Tiny JTAG adapter.
 CFLAGS          += -DUSE_MPSSE
 OBJS            += adapter-mpsse.o
-LIBS            += -L/opt/local/lib -lusb
+LIBS            += -lusb-legacy
 
 all:		ejtagproxy
 

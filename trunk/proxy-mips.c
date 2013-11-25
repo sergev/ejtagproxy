@@ -484,7 +484,7 @@ static int mips_write_single_register(unsigned int reg_no,
     assert (buf != NULL);
     assert (write_size == 4);
 
-    if (reg_no < 0 || reg_no >= RP_MIPS_NUM_REGS)
+    if (reg_no >= RP_MIPS_NUM_REGS)
         return RP_VAL_TARGETRET_ERR;
 
     unsigned val = *(unsigned*) buf;
@@ -1073,10 +1073,10 @@ static int mips_rcmd_help(int argc, char *argv[], out_func of, data_func df)
  */
 static int remote_decode_nibble(const char *in, unsigned int *nibble)
 {
-    unsigned int nib;
+    int nib;
 
-    if ((nib = rp_hex_nibble(*in)) >= 0)
-    {
+    nib = rp_hex_nibble(*in);
+    if (nib >= 0) {
         *nibble = nib;
         return TRUE;
     }
