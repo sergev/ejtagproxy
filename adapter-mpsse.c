@@ -150,7 +150,8 @@ static void bulk_write (mpsse_adapter_t *a, unsigned char *output, int nbytes)
     bytes_written = usb_bulk_write (a->usbdev, IN_EP, (char*) output,
         nbytes, 1000);
     if (bytes_written < 0) {
-        fprintf (stderr, "usb bulk write failed: %d\n", bytes_written);
+        fprintf (stderr, "usb bulk write failed: %d: %s\n",
+            bytes_written, usb_strerror());
         exit (-1);
     }
     if (bytes_written != nbytes)
@@ -880,7 +881,7 @@ found:
         }
     }
 
-#if ! defined (__CYGWIN32__) && ! defined (MINGW32)
+#if ! defined (__CYGWIN32__) && ! defined (MINGW32) && ! defined (__APPLE__)
     char driver_name [100];
     if (usb_get_driver_np (a->usbdev, 0, driver_name, sizeof(driver_name)) == 0) {
 	if (usb_detach_kernel_driver_np (a->usbdev, 0) < 0) {
