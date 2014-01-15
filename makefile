@@ -1,6 +1,6 @@
 CC		= gcc
 
-SVNVERS         = $(shell svnversion)
+SVNVERS         = $(shell head -n4 .svn/entries | tail -n1)
 CFLAGS		= -Wall -g -O -Ihidapi -DSVNVERSION='"$(SVNVERS)"'
 LDFLAGS		=
 
@@ -23,7 +23,7 @@ OBJS		= gdbproxy.o rpmisc.o target-ejtag.o hid.o \
 # Olimex ARM-USB-Tiny JTAG adapter.
 CFLAGS          += -DUSE_MPSSE
 OBJS            += adapter-mpsse.o
-LIBS            += -lusb-legacy
+LIBS            += -lusb
 
 all:		ejtagproxy
 
@@ -42,7 +42,7 @@ install:	ejtagproxy
 adapter-mpsse.o: adapter-mpsse.c adapter.h mips.h ejtag.h
 adapter-pickit2.o: adapter-pickit2.c adapter.h hidapi/hidapi.h pickit2.h \
     mips.h ejtag.h
-gdbproxy.o: gdbproxy.c gdbproxy.h
+gdbproxy.o: gdbproxy.c gdbproxy.h .svn/entries
 proxy-mips.o: proxy-mips.c gdbproxy.h target.h mips.h
 proxy-skeleton.o: proxy-skeleton.c gdbproxy.h
 rpmisc.o: rpmisc.c gdbproxy.h
