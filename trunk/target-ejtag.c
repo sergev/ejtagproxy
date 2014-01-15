@@ -1014,6 +1014,8 @@ void target_write_word (target_t *t, unsigned addr, unsigned word)
     {
         fprintf (stderr, "ERROR: cannot write %08x to address %08x\n", word, addr);
     }
+    if (debug_level > 0)
+        fprintf (stderr, "target_write_word: %08x to address %08x\n", word, addr);
 }
 
 /*
@@ -1029,8 +1031,8 @@ void target_cache_flush (target_t *t, unsigned addr)
 
         MIPS_LW (9, NEG16(PRACC_STACK - PRACC_PARAM_IN), 15), /* load R9 @ param_in[0] = address */
 
-        MIPS_CACHE (8+6, 0, 9),			/* cache 8+6,0($9) - writeback D cache */
-        MIPS_CACHE (0+4, 0, 9),			/* cache 0+4,0($9) - invalidate I cache */
+        MIPS_CACHE (6*4+1, 0, 9),		/* cache 0b11001,0($9) - writeback D cache */
+        MIPS_CACHE (4*4+0, 0, 9),		/* cache 0b10000,0($9) - invalidate I cache */
 
         MIPS_LW (9, 0, 15),			/* lw $9,($15) */
         MIPS_B (NEG16(9)),			/* b start */
@@ -1046,6 +1048,8 @@ void target_cache_flush (target_t *t, unsigned addr)
     {
         fprintf (stderr, "ERROR: cannot flush cache at address %08x\n", addr);
     }
+    if (debug_level > 0)
+        fprintf (stderr, "target_cache_flush: cache flush at %08x\n", addr);
 }
 
 /*
