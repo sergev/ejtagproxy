@@ -674,8 +674,6 @@ static int mips_write_mem(uint64_t addr,
         unsigned nwords = write_size/4;
         target_write_block (target.device, addr, nwords, (unsigned*) buf);
         write_size &= 3;
-        if (write_size <= 0)
-            return RP_VAL_TARGETRET_OK;
         addr += nwords * 4;
         buf += nwords * 4;
     }

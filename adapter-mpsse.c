@@ -595,7 +595,7 @@ static void mpsse_stop_cpu (adapter_t *adapter)
         mpsse_send (a, 0, 0, 32, ctl, 1);
 
         ctl = mpsse_recv (a);
-        if (debug_level > 0)
+        if (debug_level > 1)
             fprintf (stderr, "stop_cpu: control = %08x\n", ctl);
 
         if (ctl & CONTROL_ROCC) {
