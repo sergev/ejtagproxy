@@ -50,6 +50,7 @@ struct _target_t {
     unsigned    impcode;
     unsigned    prid;
     unsigned    is_running;
+    unsigned    restore_depc;
     unsigned    is_pic32;
     unsigned    flash_kbytes;
     unsigned    boot_kbytes;
@@ -416,6 +417,7 @@ static void target_save_state (target_t *t)
 
     t->adapter->exec (t->adapter, 1, ARRAY_SIZE(code), code,
         0, 0, ARRAY_SIZE(t->reg), t->reg);
+    t->restore_depc = 0;
 
     if (! t->dcr_valid) {
         /* Get the parameters of debug block. */
@@ -788,6 +790,9 @@ void target_resume (target_t *t)
         MIPS_NOP,
     };
 
+    if (t->restore_depc)
+        return target_run (t, t->reg[REG_DEPC]);
+
     if (t->is_running)
         return;
     t->is_running = 1;
@@ -842,6 +847,19 @@ void target_step (target_t *t)
         MIPS_NOP,
         MIPS_NOP,
     };
+    static const unsigned code_depc_step[] = {
+        MIPS_MTC0 (1, 31, 0),			/* move $1 to COP0 DeSave */
+        MIPS_MFC0 (1, 23, 0),			/* move COP0 Debug to $1 */
+        MIPS_ORI (1, 1, 0x0100),		/* set SSt bit in debug reg */
+        MIPS_MTC0 (1, 23, 0),			/* move $1 to COP0 Debug */
+        MIPS_LUI (1, UPPER16(PRACC_PARAM_IN)),  /* $1 = PRACC_PARAM_IN */
+        MIPS_LW (1, LOWER16(PRACC_PARAM_IN), 1), /* $1 = addr */
+        MIPS_MTC0 (1, 24, 0),                   /* move $1 to COP0 DEPC */
+        MIPS_MFC0 (1, 31, 0),			/* move COP0 DeSave to $1 */
+        MIPS_DRET,                              /* return from debug mode */
+        MIPS_NOP,
+        MIPS_NOP,
+    };
     static const unsigned code_step_disable[] = {
         MIPS_MTC0 (15, 31, 0),                  /* move $15 to COP0 DeSave */
         MIPS_LUI (15, UPPER16(PRACC_STACK)),    /* $15 = PRACC_STACK */
@@ -864,8 +882,12 @@ void target_step (target_t *t)
     if (t->is_running)
         return;
 
-    t->adapter->exec (t->adapter, 1,
-        ARRAY_SIZE(code_step), code_step, 0, 0, 0, 0);
+    if (t->restore_depc)
+        t->adapter->exec (t->adapter, 1, ARRAY_SIZE(code_depc_step),
+                          code_depc_step, 1, &t->reg[REG_DEPC], 0, 0);
+    else
+        t->adapter->exec (t->adapter, 1, ARRAY_SIZE(code_step),
+                          code_step, 0, 0, 0, 0);
     target_save_state (t);
 
     t->adapter->exec (t->adapter, 1,
@@ -901,6 +923,7 @@ unsigned target_read_word (target_t *t, unsigned addr)
     {
         /* Exception: bad address. */
         fprintf (stderr, "ERROR: cannot read address %08x\n", addr);
+        t->restore_depc = 1;
         return 0;
     }
     return word;
@@ -973,6 +996,7 @@ void target_read_block (target_t *t, unsigned addr,
             /* Exception: bad address. */
             fprintf (stderr, "ERROR: cannot read address %08x\n", addr);
             memset (&data[nread], 0, 4*n);
+            t->restore_depc = 1;
         }
 
         nwords -= n;
@@ -1013,6 +1037,7 @@ void target_write_word (target_t *t, unsigned addr, unsigned word)
         ARRAY_SIZE(param_in), param_in, 0, 0))
     {
         fprintf (stderr, "ERROR: cannot write %08x to address %08x\n", word, addr);
+        t->restore_depc = 1;
     }
     if (debug_level > 0)
         fprintf (stderr, "target_write_word: %08x to address %08x\n", word, addr);
@@ -1047,6 +1072,7 @@ void target_cache_flush (target_t *t, unsigned addr)
         ARRAY_SIZE(param_in), param_in, 0, 0))
     {
         fprintf (stderr, "ERROR: cannot flush cache at address %08x\n", addr);
+        t->restore_depc = 1;
     }
     if (debug_level > 0)
         fprintf (stderr, "target_cache_flush: cache flush at %08x\n", addr);
@@ -1102,6 +1128,7 @@ void target_write_block (target_t *t, unsigned addr,
         nwords + 2, param_in, 0, 0))
     {
         fprintf (stderr, "ERROR: cannot write %u words to address %08x\n", nwords, addr);
+        t->restore_depc = 1;
     }
 }
 
