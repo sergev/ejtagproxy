@@ -17,16 +17,6 @@ set (CMAKE_C_FLAGS_DEBUG "-Wall")
 set (CMAKE_BUILD_TYPE release)
 
 #
-# Linux: need libusb-1.0
-#
-if (UNIX)
-    set (HID_SRC hidapi/hid-libusb.c)
-    find_library (USB_LIB usb-1.0)
-    find_library (PTHREAD_LIB pthread)
-    message (STATUS "Found USB library: ${USB_LIB}")
-endif()
-
-#
 # Mac OS X: need IOKit
 #
 if (APPLE)
@@ -34,11 +24,19 @@ if (APPLE)
     find_library (IOKIT_LIB IOKit)
     find_library (COREFOUNDATION_LIB CoreFoundation)
     message (STATUS "Found IOKit framework: ${IOKIT_LIB}")
+#
+# Linux: need libusb-1.0
+#
+elseif (UNIX)
+    set (HID_SRC hidapi/hid-libusb.c)
+    find_library (USB_LIB usb-1.0)
+    find_library (PTHREAD_LIB pthread)
+    message (STATUS "Found USB library: ${USB_LIB}")
 endif()
 
 #
 # FT2232-based adapters: Olimex ARM-USB-Tiny and others.
-# Need libusb-0.1 library.
+# Need legacy libusb-0.1 library.
 #
 find_path (USBLEGACY_H usb.h
     /usr/include
@@ -47,7 +45,7 @@ find_path (USBLEGACY_H usb.h
 find_library (USBLEGACY_LIB
     NAMES usb usb-legacy
     PATHS /usr/lib
-          /opt/local/lib
+          /opt/local/lib/libusb-legacy
 )
 if (USBLEGACY_LIB AND USBLEGACY_H)
     add_definitions (-DUSE_MPSSE)
@@ -61,7 +59,7 @@ endif()
 # Configure the target executable
 #
 add_definitions (-DSVNVERSION='"${MY_WC_REVISION}"')
-include_directories (${CMAKE_CURRENT_SOURCE_DIR}/hidapi)
+include_directories (${CMAKE_CURRENT_SOURCE_DIR}/hidapi ${USBLEGACY_H})
 
 add_executable (ejtagproxy
     gdbproxy.c
