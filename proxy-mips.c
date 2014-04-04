@@ -33,7 +33,6 @@
 #include <unistd.h>
 #include <stdarg.h>
 #include <getopt.h>
-#include <usb.h>
 
 #include "gdbproxy.h"
 #include "target.h"
