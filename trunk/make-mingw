@@ -24,7 +24,10 @@ CFLAGS          += -DUSE_MPSSE
 OBJS            += adapter-mpsse.o
 LIBS            += -Llibusb-win32/x86 -lusb0_x86
 
-all:		ejtagproxy.exe
+all:		clean ejtagproxy.exe
+
+clean:
+		rm -f *.o
 
 ejtagproxy.exe:	$(OBJS)
 		$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
