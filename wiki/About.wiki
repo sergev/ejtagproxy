@@ -4,7 +4,7 @@ EJTAGproxy is a utility for connecting GNU debugger to [http://www.microchip.com
 
 Supported adapters:
  * [http://www.microchip.com/stellent/idcplg?IdcService=SS_GET_PAGE&nodeId=1406&dDocName=en023805 Microchip PICkit2]
- * [http://www.microchip.com/stellent/idcplg?IdcService=SS_GET_PAGE&nodeId=1406&dDocName=en538340 Microchip PICkit3] with scripting firmware (use [http://ww1.microchip.com/downloads/en/DeviceDoc/PICkit3_scripting_v03.00beta.zip Scripting Tool] to upgrade)
+ * [http://www.microchip.com/stellent/idcplg?IdcService=SS_GET_PAGE&nodeId=1406&dDocName=en538340 Microchip PICkit3] with scripting firmware (use [http://ww1.microchip.com/downloads/en/DeviceDoc/PICkit3%20Programmer%20Application%20v3.10.zip Scripting Tool] to upgrade)
  * [http://www.olimex.com/dev/arm-usb-tiny.html Olimex ARM-USB-Tiny] JTAG adapter
  * [http://www.olimex.com/dev/arm-usb-tiny-h.html Olimex ARM-USB-Tiny-H] JTAG adapter
  * [https://www.olimex.com/Products/ARM/JTAG/ARM-USB-OCD-H/ Olimex ARM-USB-OCD-H] JTAG adapter
