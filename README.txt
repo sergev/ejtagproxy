@@ -6,6 +6,10 @@ via JTAG or ICSP adapter.  Supported adapters:
  * Microchip PICkit3 with scripting firmware
  * Olimex ARM-USB-Tiny
  * Olimex ARM-USB-Tiny-H
+ * Olimex ARM-USB-OCD-H JTAG adapter
+ * Olimex MIPS-USB-OCD-H JTAG adapter
+ * Bus Blaster v2/v3 JTAG adapter from Dangerous Prototypes
+ * Flyswatter JTAG adapter from TinCanTools
 
 Usage:
     ejtagproxy [options]
@@ -29,8 +33,13 @@ and then start a new gdb session.  No need to restart ejtagproxy between
 sessions.  You can safely run it as a daemon.
 
 To build on Linux or Mac OS X, run:
+    cmake .
     make
     make install
+
+In case you don't have cmake installed, you can use plain Unix makefile.
+It might still need some modifications to adapt to your system:
+    make -f make-unix
 
 To build on Windows using MINGW compiler, run:
     gmake -f make-mingw
