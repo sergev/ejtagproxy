@@ -48,8 +48,15 @@ Example of GDB session is presented [Demo_gdb_session here].
 = Install =
 To build on Linux or Mac OS X, run:
 {{{
+    cmake .
     make
     make install
+}}}
+
+In case you don't have cmake installed, you can use plain Unix makefile.
+It might still need some modifications to adapt to your system:
+{{{
+    make -f make-unix
 }}}
 
 To build on Windows using MINGW compiler, run:
