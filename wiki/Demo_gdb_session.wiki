@@ -34,6 +34,7 @@ This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.  Type "show copying"
 and "show warranty" for details.
 This GDB was configured as "--host=i386-apple-darwin10.4.0 --target=mipsel-elf32"...
+(gdb) target remote localhost:2000
 0xbfc00000 in ?? ()
 (gdb) b main
 Breakpoint 1 at 0x9fc00068: file flash.c, line 65.
