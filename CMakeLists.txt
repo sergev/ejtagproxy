@@ -2,13 +2,17 @@ project (ejtagproxy C)
 cmake_minimum_required (VERSION 2.4)
 
 #
-# Extract Subversion revision number
+# Extract Git revision number
 #
-include (FindSubversion)
-Subversion_WC_INFO (.${SOURCE_DIR} MY)
+FIND_PACKAGE(Git)
+EXECUTE_PROCESS(
+    COMMAND ${GIT_EXECUTABLE} rev-list HEAD --count
+    OUTPUT_VARIABLE GITCOUNT
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
 cmake_policy (SET CMP0005 OLD)
 
-message ("Build ejtagproxy revision r${MY_WC_REVISION} on ${CMAKE_SYSTEM_NAME}")
+message ("Build ejtagproxy revision r${GITCOUNT} on ${CMAKE_SYSTEM_NAME}")
 message ("Compiler is ${CMAKE_C_COMPILER}")
 
 # Compilation flags
@@ -58,7 +62,7 @@ endif()
 #
 # Configure the target executable
 #
-add_definitions (-DSVNVERSION='"${MY_WC_REVISION}"')
+add_definitions (-DGITCOUNT='"${GITCOUNT}"')
 include_directories (${CMAKE_CURRENT_SOURCE_DIR}/hidapi ${USBLEGACY_H})
 
 add_executable (ejtagproxy

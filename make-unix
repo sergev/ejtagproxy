@@ -1,12 +1,8 @@
 CC		= gcc
 
-ifneq (,$(wildcard .svn/entries))
-SVNVERS         = $(shell head -n4 .svn/entries | tail -n1)
-else
-SVNVERS         = $(shell svnversion)
-endif
+GITCOUNT        = $(shell git rev-list HEAD --count)
 UNAME           = $(shell uname)
-CFLAGS		= -Wall -g -O -Ihidapi -DSVNVERSION='"$(SVNVERS)"'
+CFLAGS		= -Wall -g -O -Ihidapi -DGITCOUNT='"$(GITCOUNT)"'
 LDFLAGS		=
 
 # Linux

@@ -731,12 +731,12 @@ adapter_t *adapter_open_pickit (void)
         pickit_finish (a, 0);
         return 0;
     }
-    if (! (a->reply[3] & MCHP_STATUS_CFGRDY)) {
+    if (! (a->reply[4] & MCHP_STATUS_CFGRDY)) {
         fprintf (stderr, "No device attached.\n");
         pickit_finish (a, 0);
         return 0;
     }
-    if (! (a->reply[3] & MCHP_STATUS_CPS)) {
+    if (! (a->reply[4] & MCHP_STATUS_CPS)) {
         fprintf (stderr, "WARNING: device is code protected.\n");
     }
 

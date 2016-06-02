@@ -29,7 +29,7 @@
  *
  * QQI can be contacted as qqi@world.std.com
  */
-#define VERSION         "1.0." SVNVERSION
+#define VERSION         "1.0." GITCOUNT
 
 #if defined(WIN32)
 #   include <windows.h>
