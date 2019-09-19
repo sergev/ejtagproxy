@@ -25,6 +25,7 @@ To start a debug session:
 3) Run gdb and connect to the PIC32 target:
     set remote hardware-breakpoint-limit 6
     set remote hardware-watchpoint-limit 2
+    set endian little
     target remote localhost:2000
 
 When gdb session is closed, ejtagproxy disconnects from the target board.
