@@ -972,8 +972,8 @@ failed:
             fprintf (stderr, "%s: status %04x\n", a->adapter.name, status);
         if (status & MCHP_STATUS_DEVRST)
             fprintf (stderr, "%s: processor is in reset mode\n", a->adapter.name);
-        if ((status & ~MCHP_STATUS_DEVRST) !=
-            (MCHP_STATUS_CPS | MCHP_STATUS_CFGRDY | MCHP_STATUS_FAEN))
+        if ((status & ~(MCHP_STATUS_DEVRST | MCHP_STATUS_FAEN)) !=
+            (MCHP_STATUS_CPS | MCHP_STATUS_CFGRDY))
         {
             fprintf (stderr, "%s: invalid status = %04x\n", a->adapter.name, status);
             mpsse_reset (a, 0, 0, 0);
